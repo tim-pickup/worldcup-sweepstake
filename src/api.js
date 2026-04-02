@@ -44,21 +44,19 @@ async function get(action, params = {}) {
 }
 
 /**
- * POST request — sends `body` as JSON in the request body.
- * The `action` is also added as a URL query parameter so Apps Script
- * can read it from e.parameter before parsing the body.
+ * Write request — sent as GET with the body JSON-encoded in a `payload`
+ * query parameter. Apps Script's 302 redirect causes browsers to send an
+ * OPTIONS preflight for any POST, which Apps Script cannot respond to
+ * (405). GET requests are never preflighted, so this avoids CORS entirely.
  */
 async function post(action, body = {}) {
   const url = new URL(BASE_URL);
   url.searchParams.set('action', action);
+  url.searchParams.set('payload', JSON.stringify(body));
 
   const response = await fetch(url.toString(), {
-    method: 'POST',
+    method: 'GET',
     redirect: 'follow',
-    // 'text/plain' avoids the CORS preflight that Apps Script cannot handle.
-    // The body is still valid JSON; Apps Script reads it via e.postData.contents.
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify(body),
   });
 
   return response.json();

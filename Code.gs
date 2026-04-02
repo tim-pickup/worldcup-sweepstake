@@ -613,12 +613,30 @@ function handleSubmitKnockoutPreferences(body) {
 
 // ─── Main Router ─────────────────────────────────────────────────────────────
 
+/**
+ * All requests arrive as GET to avoid CORS preflight issues.
+ * Apps Script's 302 redirect causes browsers to send an OPTIONS preflight
+ * for any POST, which Apps Script returns 405 for. GET requests are never
+ * preflighted regardless of redirect, so write actions are sent as GET
+ * with the JSON body encoded in the `payload` query parameter.
+ */
 function doGet(e) {
   try {
     var action = (e.parameter && e.parameter.action) || '';
     var pin    = (e.parameter && e.parameter.pin)    || '';
 
+    // Parse the payload parameter for write actions
+    var body = {};
+    if (e.parameter && e.parameter.payload) {
+      try {
+        body = JSON.parse(e.parameter.payload);
+      } catch (parseErr) {
+        return fail('Invalid payload JSON: ' + parseErr.message);
+      }
+    }
+
     switch (action) {
+      // ── Read actions ──────────────────────────────────────────────────────
       case 'getConfig':        return handleGetConfig();
       case 'getLeaderboard':   return handleGetLeaderboard();
       case 'getTeams':         return handleGetTeams();
@@ -626,12 +644,12 @@ function doGet(e) {
       case 'getMatches':       return handleGetMatches();
       case 'getAllocations':   return handleGetAllocations(pin);
       case 'getKnockoutTeams': return handleGetKnockoutTeams(pin);
+      // ── Write actions (body arrives via ?payload=...) ─────────────────────
+      case 'register':                  return handleRegister(body);
+      case 'submitGroupPreferences':    return handleSubmitGroupPreferences(body);
+      case 'submitKnockoutPreferences': return handleSubmitKnockoutPreferences(body);
       default:
-        return fail(
-          'Unknown action: "' + action + '". Valid GET actions: ' +
-          'getConfig, getLeaderboard, getTeams, getSquads, getMatches, getAllocations, getKnockoutTeams',
-          404
-        );
+        return fail('Unknown action: "' + action + '"', 404);
     }
   } catch (err) {
     return fail('Server error: ' + err.message, 500);

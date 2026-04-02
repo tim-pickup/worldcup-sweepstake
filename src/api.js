@@ -55,7 +55,9 @@ async function post(action, body = {}) {
   const response = await fetch(url.toString(), {
     method: 'POST',
     redirect: 'follow',
-    headers: { 'Content-Type': 'application/json' },
+    // 'text/plain' avoids the CORS preflight that Apps Script cannot handle.
+    // The body is still valid JSON; Apps Script reads it via e.postData.contents.
+    headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify(body),
   });
 

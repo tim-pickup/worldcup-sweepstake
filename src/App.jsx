@@ -176,38 +176,39 @@ export default function App() {
       <nav className="nav">
         <span className="nav-title">🏆 WC2026</span>
         <div className="nav-actions">
-          {isRegistrationPhase && (
-            <button
-              className={`nav-btn${view === 'landing' ? ' active' : ''}`}
-              onClick={() => setView('landing')}
-            >
-              Home
-            </button>
-          )}
+          {isRegistrationPhase ? (
+            <>
+              <button
+                className={`nav-btn${view === 'landing' ? ' active' : ''}`}
+                onClick={() => setView('landing')}
+              >
+                Home
+              </button>
+              <button
+                className={`nav-btn${view === 'register' ? ' active' : ''}`}
+                onClick={() => setView('register')}
+              >
+                Register
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                className={`nav-btn${view === 'leaderboard' ? ' active' : ''}`}
+                onClick={() => setView('leaderboard')}
+              >
+                Leaderboard
+              </button>
 
-          <button
-            className={`nav-btn${view === 'leaderboard' ? ' active' : ''}`}
-            onClick={() => setView('leaderboard')}
-          >
-            Leaderboard
-          </button>
-
-          {isRegistrationPhase && !player && (
-            <button
-              className={`nav-btn${view === 'register' ? ' active' : ''}`}
-              onClick={() => setView('register')}
-            >
-              Register
-            </button>
-          )}
-
-          {!player && (
-            <button
-              className={`nav-btn${view === 'login' ? ' active' : ''}`}
-              onClick={() => setView('login')}
-            >
-              Login
-            </button>
+              {!player && (
+                <button
+                  className={`nav-btn${view === 'login' ? ' active' : ''}`}
+                  onClick={() => setView('login')}
+                >
+                  Login
+                </button>
+              )}
+            </>
           )}
 
           {player && (

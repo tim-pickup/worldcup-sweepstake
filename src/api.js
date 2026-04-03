@@ -10,6 +10,10 @@
  *   { ok: false, error: <string>, code: <number> }  — failure
  *
  * Callers should always check `result.ok` before using `result.data`.
+ *
+ * Transport note: All requests use GET (including writes) to avoid the
+ * CORS preflight that Apps Script cannot handle. Write payloads are
+ * JSON-encoded in the `payload` query parameter.
  */
 
 const BASE_URL = import.meta.env.VITE_APPS_SCRIPT_URL;
@@ -23,9 +27,6 @@ if (!BASE_URL) {
 
 // ─── Internal helpers ────────────────────────────────────────────────────────
 
-/**
- * GET request — appends `params` as query string values.
- */
 async function get(action, params = {}) {
   const url = new URL(BASE_URL);
   url.searchParams.set('action', action);
@@ -34,134 +35,78 @@ async function get(action, params = {}) {
       url.searchParams.set(key, value);
     }
   }
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    redirect: 'follow', // required for Apps Script web-app deployments
-  });
-
+  const response = await fetch(url.toString(), { method: 'GET', redirect: 'follow' });
   return response.json();
 }
 
-/**
- * Write request — sent as GET with the body JSON-encoded in a `payload`
- * query parameter. Apps Script's 302 redirect causes browsers to send an
- * OPTIONS preflight for any POST, which Apps Script cannot respond to
- * (405). GET requests are never preflighted, so this avoids CORS entirely.
- */
 async function post(action, body = {}) {
   const url = new URL(BASE_URL);
   url.searchParams.set('action', action);
   url.searchParams.set('payload', JSON.stringify(body));
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    redirect: 'follow',
-  });
-
+  const response = await fetch(url.toString(), { method: 'GET', redirect: 'follow' });
   return response.json();
 }
 
-// ─── Public endpoints ────────────────────────────────────────────────────────
+// ─── Public read endpoints ───────────────────────────────────────────────────
 
-/**
- * Returns phase dates, current phase name, and knockout budget.
- *
- * Response data: {
- *   currentPhase: string,
- *   registrationClose: string,
- *   groupPrefsOpen: string, groupPrefsClose: string,
- *   groupScoringOpen: string, groupScoringClose: string,
- *   knockoutPrefsOpen: string, knockoutPrefsClose: string,
- *   knockoutScoringOpen: string, knockoutScoringClose: string,
- *   knockoutBudget: number
- * }
- */
+/** Phase dates, current phase name, knockout budget. */
 export function getConfig() {
   return get('getConfig');
 }
 
-/**
- * Returns the full leaderboard.
- *
- * Response data: Array of {
- *   Rank, "Player Name", "Total Points",
- *   "Goal Points", "Captain Points", "Own Goal Points",
- *   "Card Points", "Last Updated"
- * }
- */
+/** Full leaderboard — Rank, Player Name, Total Points, breakdown columns, Last Updated. */
 export function getLeaderboard() {
   return get('getLeaderboard');
 }
 
-/**
- * Returns all 32 teams with tier, FIFA ranking, flag emoji, and group.
- *
- * Response data: Array of {
- *   "Team Name", "FIFA Ranking", Tier, "Flag Emoji", Group
- * }
- */
+/** All 32 teams — Team Name, FIFA Ranking, Tier, Flag Emoji, Group. */
 export function getTeams() {
   return get('getTeams');
 }
 
-/**
- * Returns squad lists for all teams.
- *
- * Response data: {
- *   "France": [{ playerName, position, shirtNumber }, ...],
- *   "Brazil":  [...],
- *   ...
- * }
- */
+/** Squad lists keyed by team name — [{ playerName, position, shirtNumber }]. */
 export function getSquads() {
   return get('getSquads');
 }
 
-/**
- * Returns all match results.
- *
- * Response data: Array of {
- *   "Match ID", Date, Stage, Group,
- *   "Home Team", "Away Team", "Home Score", "Away Score"
- * }
- */
+/** All match results. */
 export function getMatches() {
   return get('getMatches');
 }
 
-// ─── PIN-gated endpoints ─────────────────────────────────────────────────────
+/**
+ * Alphabetically-sorted list of registered player names.
+ * Used to populate the login name picker.
+ */
+export function getPlayerNames() {
+  return get('getPlayerNames');
+}
 
 /**
- * Returns the authenticated player's allocated teams plus any saved
- * group preferences.
- *
- * @param {string} pin
- * Response data: {
- *   player: { "Player ID", Name },
- *   allocations: Array of { "Player ID", "Player Name", "Team Name", Tier },
- *   groupPreferences: Array of {
- *     "Player ID", "Player Name", "Team Name", Tier,
- *     "Captain Name", "Tier 2 Mechanism"
- *   }
- * }
+ * Public view of any player's picks — allocations, group prefs, knockout prefs.
+ * Used by the leaderboard expand row. No PIN required.
+ * @param {string} playerName
  */
-export function getAllocations(pin) {
-  return get('getAllocations', { pin });
+export function getPlayerPicks(playerName) {
+  return get('getPlayerPicks', { playerName });
+}
+
+// ─── PIN-gated read endpoints ────────────────────────────────────────────────
+
+/**
+ * Returns the authenticated player's allocations + saved group preferences.
+ * Authentication is name + PIN — both must match the same player row.
+ * @param {string} name
+ * @param {string} pin
+ */
+export function getAllocations(name, pin) {
+  return get('getAllocations', { name, pin });
 }
 
 /**
  * Returns the 16 knockout teams with prices.
  * If a PIN is supplied, also returns the player's existing knockout picks.
- *
  * @param {string} [pin]
- * Response data: {
- *   teams: Array of { "Team Name", "Flag Emoji", Price },
- *   myPreferences: Array of {
- *     "Player ID", "Player Name", "Team Purchased",
- *     "Price Paid", "Captain Name", "Total Spend"
- *   } | null
- * }
  */
 export function getKnockoutTeams(pin = '') {
   return get('getKnockoutTeams', { pin });
@@ -171,11 +116,9 @@ export function getKnockoutTeams(pin = '') {
 
 /**
  * Registers a new player.
- *
  * @param {string} name
- * @param {string} pin           4–8 characters
+ * @param {string} pin  4–8 characters
  * @param {string} registrationCode
- * Response data: { playerID, name, message }
  */
 export function register(name, pin, registrationCode) {
   return post('register', { name, pin, registrationCode });
@@ -183,12 +126,8 @@ export function register(name, pin, registrationCode) {
 
 /**
  * Saves group stage captain selections and Tier 2 mechanism choice.
- *
  * @param {string} pin
  * @param {Array<{ team: string, tier: number, captain: string, tier2Mechanism?: "scored"|"conceded" }>} captains
- *   One entry per allocated team. tier2Mechanism is required on the Tier 2 entry.
- *
- * Response data: { message }
  */
 export function submitGroupPreferences(pin, captains) {
   return post('submitGroupPreferences', { pin, captains });
@@ -196,12 +135,9 @@ export function submitGroupPreferences(pin, captains) {
 
 /**
  * Saves knockout stage team purchases and captain selection.
- *
  * @param {string}   pin
  * @param {string[]} teamsPurchased  Array of team names
  * @param {string}   captain         Must be in one of the purchased teams' squads
- *
- * Response data: { message, totalSpend, remainingBudget }
  */
 export function submitKnockoutPreferences(pin, teamsPurchased, captain) {
   return post('submitKnockoutPreferences', { pin, teamsPurchased, captain });

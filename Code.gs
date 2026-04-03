@@ -275,14 +275,69 @@ function handleGetMatches() {
 }
 
 /**
+ * Returns an alphabetically-sorted list of registered player names.
+ * Public — no PIN required. Used to populate the login name picker.
+ */
+function handleGetPlayerNames() {
+  var sheet = getSheet('Players');
+  var data = sheet.getDataRange().getValues();
+  if (data.length < 2) return ok([]);
+  var headers = data[0];
+  var nameCol = headers.indexOf('Name');
+  if (nameCol === -1) return fail('Players sheet is missing a "Name" column');
+  var names = [];
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][nameCol]) names.push(String(data[i][nameCol]));
+  }
+  names.sort(function(a, b) { return a.toLowerCase().localeCompare(b.toLowerCase()); });
+  return ok(names);
+}
+
+/**
+ * Returns a player's allocations, group preferences, and knockout preferences.
+ * Public — no PIN required. Used by the leaderboard detail view.
+ */
+function handleGetPlayerPicks(playerName) {
+  if (!playerName) return fail('playerName is required');
+  var player = findPlayerByName(playerName);
+  if (!player) return fail('Player not found', 404);
+  var playerId = player['Player ID'];
+
+  var allocSheet = getSheet('Allocations');
+  var allocData  = allocSheet.getDataRange().getValues();
+  var allocs = [];
+  if (allocData.length >= 2) {
+    var aHeaders = allocData[0];
+    var aPidCol  = aHeaders.indexOf('Player ID');
+    for (var i = 1; i < allocData.length; i++) {
+      if (String(allocData[i][aPidCol]) === String(playerId)) {
+        var aRow = {};
+        aHeaders.forEach(function (h, j) { aRow[h] = allocData[i][j]; });
+        allocs.push(aRow);
+      }
+    }
+  }
+
+  return ok({
+    player:               { 'Player ID': playerId, Name: player['Name'] },
+    allocations:          allocs,
+    groupPreferences:     getGroupPrefsForPlayer(playerId),
+    knockoutPreferences:  getKnockoutPrefsForPlayer(playerId)
+  });
+}
+
+/**
  * Returns the requesting player's allocations plus any saved group preferences.
- * Requires a valid PIN.
+ * Requires both name AND pin — validates they match the same player row.
  * Allocations columns: Player ID | Player Name | Team Name | Tier
  */
-function handleGetAllocations(pin) {
-  if (!pin) return fail('PIN is required', 400);
-  var player = findPlayerByPin(pin);
-  if (!player) return fail('Invalid PIN', 401);
+function handleGetAllocations(name, pin) {
+  if (!name) return fail('Name is required', 400);
+  if (!pin)  return fail('PIN is required', 400);
+  var player = findPlayerByName(name);
+  if (!player || String(player['PIN']) !== String(pin)) {
+    return fail('Invalid name or PIN', 401);
+  }
 
   var playerId  = player['Player ID'];
   var allocSheet = getSheet('Allocations');
@@ -400,11 +455,6 @@ function handleRegister(body) {
 
   if (findPlayerByName(name)) {
     return fail('That name is already registered. Please choose a different name.', 409);
-  }
-
-  // PINs are unique — they act as the login token
-  if (findPlayerByPin(pin)) {
-    return fail('That PIN is already in use. Please choose a different PIN.', 409);
   }
 
   var sheet   = getSheet('Players');
@@ -642,7 +692,9 @@ function doGet(e) {
       case 'getTeams':         return handleGetTeams();
       case 'getSquads':        return handleGetSquads();
       case 'getMatches':       return handleGetMatches();
-      case 'getAllocations':   return handleGetAllocations(pin);
+      case 'getPlayerNames':   return handleGetPlayerNames();
+      case 'getPlayerPicks':   return handleGetPlayerPicks(e.parameter.playerName || '');
+      case 'getAllocations':   return handleGetAllocations(e.parameter.name || '', pin);
       case 'getKnockoutTeams': return handleGetKnockoutTeams(pin);
       // ── Write actions (body arrives via ?payload=...) ─────────────────────
       case 'register':                  return handleRegister(body);

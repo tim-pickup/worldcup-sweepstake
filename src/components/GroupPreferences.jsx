@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { getAllocations, getSquads, submitGroupPreferences } from '../api.js';
 
-export default function GroupPreferences({ pin }) {
+export default function GroupPreferences({ player }) {
+  const { pin, name } = player;
   const [allocations, setAllocations] = useState([]);
   const [squads, setSquads] = useState({});
   const [captains, setCaptains] = useState({}); // { [teamName]: captain }
@@ -17,7 +18,7 @@ export default function GroupPreferences({ pin }) {
       setLoading(true);
       setError('');
       const [allocResult, squadResult] = await Promise.all([
-        getAllocations(pin),
+        getAllocations(name, pin),
         getSquads(),
       ]);
 
@@ -55,7 +56,7 @@ export default function GroupPreferences({ pin }) {
       setLoading(false);
     }
     fetchData();
-  }, [pin]);
+  }, [pin, name]);
 
   function handleCaptainChange(teamName, value) {
     setCaptains((prev) => ({ ...prev, [teamName]: value }));
@@ -153,7 +154,7 @@ export default function GroupPreferences({ pin }) {
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label>Tier 2 Scoring Mechanism</label>
                   <div className="radio-group">
-                    <label>
+                    <label className="radio-option">
                       <input
                         type="radio"
                         name={`mechanism-${team}`}
@@ -162,9 +163,9 @@ export default function GroupPreferences({ pin }) {
                         onChange={() => handleMechanismChange(team, 'scored')}
                         disabled={isDisabled}
                       />
-                      Goals Scored
+                      <span>⚡ Goals Scored</span>
                     </label>
-                    <label>
+                    <label className="radio-option">
                       <input
                         type="radio"
                         name={`mechanism-${team}`}
@@ -173,7 +174,7 @@ export default function GroupPreferences({ pin }) {
                         onChange={() => handleMechanismChange(team, 'conceded')}
                         disabled={isDisabled}
                       />
-                      Goals Conceded
+                      <span>🛡 Goals Conceded</span>
                     </label>
                   </div>
                 </div>

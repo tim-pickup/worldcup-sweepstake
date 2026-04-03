@@ -1294,6 +1294,18 @@ select option {
   line-height: 1.65;
 }
 
+/* Phase label */
+.landing-phase-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-bottom: 0.6rem;
+  border-left: 2px solid var(--gold);
+  padding-left: 0.65rem;
+}
+
 /* Scoring table */
 .landing-scoring-grid {
   background: var(--surface-2);

@@ -57,30 +57,27 @@ function PlayerAvatar({ name, index }) {
   );
 }
 
-const HOW_IT_WORKS = [
+const GROUP_TIERS = [
   {
     tier: 1,
     color: 'var(--tier1)',
-    dim: 'var(--tier1-dim)',
     icon: '⭐',
-    title: 'Tier 1 Team',
-    desc: 'Your top team. Points from goals scored by this team — every goal counts.',
+    title: 'Tier 1 — Goals Scored',
+    desc: 'Your strongest team. Earn a point for every goal they score.',
   },
   {
     tier: 2,
     color: 'var(--tier2)',
-    dim: 'var(--tier2-dim)',
     icon: '🎯',
-    title: 'Tier 2 Team',
-    desc: 'Your wildcard pick. You choose whether to score from goals scored OR goals conceded.',
+    title: 'Tier 2 — Your Choice',
+    desc: 'You pick the mechanism: earn from goals scored OR goals conceded.',
   },
   {
     tier: 3,
     color: 'var(--tier3)',
-    dim: 'var(--tier3-dim)',
     icon: '🛡️',
-    title: 'Tier 3 Team',
-    desc: 'Your defensive pick. Points from goals conceded — the leakier the better!',
+    title: 'Tier 3 — Goals Conceded',
+    desc: 'Your underdog pick. Earn a point for every goal they let in.',
   },
 ];
 
@@ -96,9 +93,7 @@ export default function LandingPage({ config, onRegister }) {
     });
   }, []);
 
-  const spotsLeft = Math.max(0, 40 - names.length);
-
-  return (
+  const spotsLeft = Math.max(0, 40 - names.length);  return (
     <div className="landing">
       {/* ── Hero ─────────────────────────────────────────────────── */}
       <div className="landing-hero">
@@ -139,16 +134,12 @@ export default function LandingPage({ config, onRegister }) {
             </div>
           )}
 
-          <button className="landing-cta" onClick={onRegister}>
-            Join the Sweepstake
-            <span className="landing-cta-arrow">→</span>
-          </button>
-
-          {spotsLeft > 0 && (
-            <p className="landing-spots">
-              🔥 Only <strong>{spotsLeft} spots</strong> remaining — don't miss out
-            </p>
-          )}
+          <div style={{ marginTop: '2rem' }}>
+            <button className="landing-cta" onClick={onRegister}>
+              Join the Sweepstake
+              <span className="landing-cta-arrow">→</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -199,39 +190,58 @@ export default function LandingPage({ config, onRegister }) {
       <div className="landing-section landing-section-alt">
         <div className="landing-section-inner">
           <h2 className="landing-section-title" style={{ textAlign: 'center' }}>How It Works</h2>
-          <p className="landing-section-sub" style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
-            Each player is randomly allocated one team from each tier. Then the real strategy begins.
+          <p className="landing-section-sub" style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            Each player is randomly allocated one team from each tier. Points are earned across the full tournament.
           </p>
 
-          <div className="landing-how-grid">
-            {HOW_IT_WORKS.map(({ tier, color, dim, icon, title, desc }) => (
-              <div
-                key={tier}
-                className="landing-how-card"
-                style={{ '--card-accent': color, '--card-dim': dim }}
-              >
+          {/* Group Stage */}
+          <div className="landing-phase-label">⚽ Group Stage</div>
+          <p className="landing-section-sub" style={{ marginBottom: '1rem' }}>
+            You are allocated three teams — one from each tier. Pick a captain for each team to earn a bonus point whenever they score.
+          </p>
+          <div className="landing-how-grid" style={{ marginBottom: '1.75rem' }}>
+            {GROUP_TIERS.map(({ tier, color, icon, title, desc }) => (
+              <div key={tier} className="landing-how-card" style={{ '--card-accent': color }}>
                 <div className="landing-how-icon">{icon}</div>
-                <div className="landing-how-tier">Tier {tier}</div>
                 <div className="landing-how-title">{title}</div>
                 <p className="landing-how-desc">{desc}</p>
               </div>
             ))}
           </div>
 
+          {/* Knockout Stage */}
+          <div className="landing-phase-label">🏆 Knockout Stage</div>
+          <p className="landing-section-sub" style={{ marginBottom: '1rem' }}>
+            Once the group stage is done, every player gets a coin budget to bid on knockout teams. Buy as many as your budget allows, pick a captain, and earn points as teams progress.
+          </p>
+          <div className="landing-how-card" style={{ '--card-accent': 'var(--gold)', marginBottom: '1.75rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: 180 }}>
+                <div className="landing-how-icon">🪙</div>
+                <div className="landing-how-title">Auction Budget</div>
+                <p className="landing-how-desc">Spend your coins on knockout teams. Go all-in on one favourite or spread across several — it's your call.</p>
+              </div>
+              <div style={{ flex: 1, minWidth: 180 }}>
+                <div className="landing-how-icon">👑</div>
+                <div className="landing-how-title">Captain Bonus</div>
+                <p className="landing-how-desc">Name a captain from any of your purchased teams' squads. Every goal they score earns you an extra point.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Scoring */}
+          <div className="landing-phase-label">📊 Points Reference</div>
           <div className="landing-scoring-grid">
             {[
-              { icon: '⚽', label: 'Goal (standard)', pts: '+1' },
-              { icon: '⭐', label: 'Captain goal bonus', pts: '+1' },
+              { icon: '⚽', label: 'Goal (scored or conceded, depending on tier)', pts: '+1' },
+              { icon: '👑', label: 'Captain scores a goal', pts: '+1' },
               { icon: '🔴', label: 'Own goal', pts: '−1' },
               { icon: '🟨', label: 'Yellow card', pts: '−1' },
               { icon: '🟥', label: 'Red card', pts: '−2' },
             ].map(({ icon, label, pts }) => (
               <div key={label} className="landing-score-row">
                 <span>{icon} {label}</span>
-                <span
-                  className="landing-score-pts"
-                  style={{ color: pts.startsWith('+') ? 'var(--green)' : 'var(--danger)' }}
-                >
+                <span className="landing-score-pts" style={{ color: pts.startsWith('+') ? 'var(--green)' : 'var(--danger)' }}>
                   {pts}
                 </span>
               </div>

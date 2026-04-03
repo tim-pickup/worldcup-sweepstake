@@ -129,8 +129,8 @@ export function register(name, pin, registrationCode) {
  * @param {string} pin
  * @param {Array<{ team: string, tier: number, captain: string, tier2Mechanism?: "scored"|"conceded" }>} captains
  */
-export function submitGroupPreferences(pin, captains) {
-  return post('submitGroupPreferences', { pin, captains });
+export function submitGroupPreferences(name, pin, captains) {
+  return post('submitGroupPreferences', { name, pin, captains });
 }
 
 /**
@@ -139,6 +139,6 @@ export function submitGroupPreferences(pin, captains) {
  * @param {string[]} teamsPurchased  Array of team names
  * @param {string}   captain         Must be in one of the purchased teams' squads
  */
-export function submitKnockoutPreferences(pin, teamsPurchased, captain) {
-  return post('submitKnockoutPreferences', { pin, teamsPurchased, captain });
+export function submitKnockoutPreferences(name, pin, teamsPurchased, captain) {
+  return post('submitKnockoutPreferences', { name, pin, teamsPurchased, captain });
 }

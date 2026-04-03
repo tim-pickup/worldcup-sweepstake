@@ -93,7 +93,7 @@ export default function GroupPreferences({ player }) {
     });
 
     setSubmitting(true);
-    const result = await submitGroupPreferences(pin, captainsPayload);
+    const result = await submitGroupPreferences(name, pin, captainsPayload);
     setSubmitting(false);
 
     if (result.ok) {

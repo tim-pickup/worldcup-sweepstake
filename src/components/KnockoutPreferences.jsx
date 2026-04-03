@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { getKnockoutTeams, getSquads, getConfig, submitKnockoutPreferences } from '../api.js';
 
 export default function KnockoutPreferences({ player }) {
-  const { pin } = player;
+  const { pin, name } = player;
   const [teams, setTeams] = useState([]);
   const [squads, setSquads] = useState({});
   const [budget, setBudget] = useState(1000);
@@ -127,7 +127,7 @@ export default function KnockoutPreferences({ player }) {
     const teamsPurchased = Array.from(selected);
 
     setSubmitting(true);
-    const result = await submitKnockoutPreferences(pin, teamsPurchased, captain);
+    const result = await submitKnockoutPreferences(name, pin, teamsPurchased, captain);
     setSubmitting(false);
 
     if (result.ok) {

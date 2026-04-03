@@ -491,13 +491,15 @@ function handleRegister(body) {
  * Re-submissions overwrite all previous rows for this player.
  */
 function handleSubmitGroupPreferences(body) {
-  var pin      = body.pin      ? String(body.pin).trim() : '';
+  var name     = body.name     ? String(body.name).trim()     : '';
+  var pin      = body.pin      ? String(body.pin).trim()      : '';
   var captains = body.captains;
 
-  if (!pin) return fail('PIN is required');
+  if (!name) return fail('Name is required', 400);
+  if (!pin)  return fail('PIN is required', 400);
 
-  var player = findPlayerByPin(pin);
-  if (!player) return fail('Invalid PIN', 401);
+  var player = findPlayerByName(name);
+  if (!player || String(player['PIN']) !== String(pin)) return fail('Invalid name or PIN', 401);
 
   var config = readConfig();
   if (!isPhaseOpen('group_preferences', config)) {
@@ -556,14 +558,16 @@ function handleSubmitGroupPreferences(body) {
  * Re-submissions overwrite all previous rows for this player.
  */
 function handleSubmitKnockoutPreferences(body) {
+  var name           = body.name    ? String(body.name).trim()    : '';
   var pin            = body.pin     ? String(body.pin).trim()     : '';
   var teamsPurchased = body.teamsPurchased;
   var captain        = body.captain ? String(body.captain).trim() : '';
 
-  if (!pin) return fail('PIN is required');
+  if (!name) return fail('Name is required', 400);
+  if (!pin)  return fail('PIN is required', 400);
 
-  var player = findPlayerByPin(pin);
-  if (!player) return fail('Invalid PIN', 401);
+  var player = findPlayerByName(name);
+  if (!player || String(player['PIN']) !== String(pin)) return fail('Invalid name or PIN', 401);
 
   var config = readConfig();
   if (!isPhaseOpen('knockout_preferences', config)) {

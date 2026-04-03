@@ -5,6 +5,7 @@ import Leaderboard from './components/Leaderboard.jsx';
 import MatchResults from './components/MatchResults.jsx';
 import RegistrationForm from './components/RegistrationForm.jsx';
 import LoginForm from './components/LoginForm.jsx';
+import LandingPage from './components/LandingPage.jsx';
 import GroupPreferences from './components/GroupPreferences.jsx';
 import KnockoutPreferences from './components/KnockoutPreferences.jsx';
 import LockedPicks from './components/LockedPicks.jsx';
@@ -142,6 +143,13 @@ export default function App() {
   const currentPhase = config?.currentPhase ?? null;
   const isRegistrationPhase = currentPhase === 'registration';
 
+  // During registration, land on the landing page by default
+  useEffect(() => {
+    if (isRegistrationPhase && view === 'leaderboard') {
+      setView('landing');
+    }
+  }, [isRegistrationPhase]);
+
   function renderPicksContent() {
     if (!player) {
       return (
@@ -168,6 +176,15 @@ export default function App() {
       <nav className="nav">
         <span className="nav-title">🏆 WC2026</span>
         <div className="nav-actions">
+          {isRegistrationPhase && (
+            <button
+              className={`nav-btn${view === 'landing' ? ' active' : ''}`}
+              onClick={() => setView('landing')}
+            >
+              Home
+            </button>
+          )}
+
           <button
             className={`nav-btn${view === 'leaderboard' ? ' active' : ''}`}
             onClick={() => setView('leaderboard')}
@@ -218,6 +235,13 @@ export default function App() {
             <Leaderboard onRowsChange={setLeaderRows} />
             <MatchResults />
           </>
+        )}
+
+        {view === 'landing' && (
+          <LandingPage
+            config={config}
+            onRegister={() => setView('register')}
+          />
         )}
 
         {view === 'register' && (

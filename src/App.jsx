@@ -14,8 +14,16 @@ const SESSION_KEY = 'wc_player';
 function loadPlayerFromSession() {
   try {
     const raw = sessionStorage.getItem(SESSION_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    // Discard sessions that pre-date name+PIN auth (missing name field)
+    if (!p?.name || !p?.pin) {
+      sessionStorage.removeItem(SESSION_KEY);
+      return null;
+    }
+    return p;
   } catch {
+    sessionStorage.removeItem(SESSION_KEY);
     return null;
   }
 }

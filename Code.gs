@@ -251,6 +251,7 @@ function handleGetSquads() {
   var playerCol  = headers.indexOf('Player Name');
   var posCol     = headers.indexOf('Position');
   var shirtCol   = headers.indexOf('Shirt Number');
+  var priceCol   = headers.indexOf('PlayerPrice');
 
   if (teamCol === -1)   return fail('Squads sheet is missing a "Team Name" column');
   if (playerCol === -1) return fail('Squads sheet is missing a "Player Name" column');
@@ -263,7 +264,8 @@ function handleGetSquads() {
     result[team].push({
       playerName:  data[i][playerCol],
       position:    posCol   !== -1 ? data[i][posCol]   : '',
-      shirtNumber: shirtCol !== -1 ? data[i][shirtCol] : ''
+      shirtNumber: shirtCol !== -1 ? data[i][shirtCol] : '',
+      playerPrice: priceCol !== -1 ? (Number(data[i][priceCol]) || 0) : 0
     });
   }
   return ok(result);
@@ -599,7 +601,10 @@ function handleSubmitKnockoutPreferences(body) {
     if (tn) priceMap[tn] = Number(ktData[i][ktPriceCol]) || 0;
   }
 
-  // ── Validate teams and calculate spend ────────────────────────────────────
+  // All team names in this season's knockout round (used for captain validation)
+  var knockoutTeamNames = Object.keys(priceMap);
+
+  // ── Validate teams and calculate team spend ───────────────────────────────
   var totalSpend = 0;
   for (var t = 0; t < teamsPurchased.length; t++) {
     var teamName = String(teamsPurchased[t]);
@@ -607,39 +612,46 @@ function handleSubmitKnockoutPreferences(body) {
     totalSpend += priceMap[teamName];
   }
 
-  var budget = Number(config['KnockoutBudget']) || 1000;
-  if (totalSpend > budget) {
-    return fail(
-      'Total spend (' + totalSpend + ') exceeds your budget (' + budget + '). Please remove some teams.',
-      400
-    );
-  }
-
-  // ── Validate captain is in a purchased team's squad ───────────────────────
-  // Squads tab: Team Name | Player Name | Position | Shirt Number
+  // ── Validate captain and add their price to total spend ───────────────────
+  // Captain can be any player from any knockout team's squad (not limited to purchased teams).
+  // Each player's price is in column E (PlayerPrice) of the Squads sheet.
   var squadsSheet = getSheet('Squads');
   var squadsData  = squadsSheet.getDataRange().getValues();
+  var captainPrice = 0;
+
   if (squadsData.length >= 2) {
-    var sqHeaders    = squadsData[0];
-    var sqTeamCol    = sqHeaders.indexOf('Team Name');
-    var sqPlayerCol  = sqHeaders.indexOf('Player Name');
+    var sqHeaders   = squadsData[0];
+    var sqTeamCol   = sqHeaders.indexOf('Team Name');
+    var sqPlayerCol = sqHeaders.indexOf('Player Name');
+    var sqPriceCol  = sqHeaders.indexOf('PlayerPrice');
     var captainLower = captain.toLowerCase();
     var captainValid = false;
 
     if (sqTeamCol !== -1 && sqPlayerCol !== -1) {
       for (var s = 1; s < squadsData.length; s++) {
-        if (teamsPurchased.indexOf(String(squadsData[s][sqTeamCol])) !== -1 &&
+        if (knockoutTeamNames.indexOf(String(squadsData[s][sqTeamCol])) !== -1 &&
             String(squadsData[s][sqPlayerCol]).toLowerCase() === captainLower) {
           captainValid = true;
+          captainPrice = sqPriceCol !== -1 ? (Number(squadsData[s][sqPriceCol]) || 0) : 0;
           break;
         }
       }
       if (!captainValid) {
-        return fail('Captain must be a player from one of your purchased teams\' squads');
+        return fail('Captain must be a player from a knockout tournament team\'s squad');
       }
     }
   }
-  // If Squads sheet is empty, skip the captain squad check.
+  // If Squads sheet is empty, skip the captain validation check.
+
+  totalSpend += captainPrice;
+
+  var budget = Number(config['KnockoutBudget']) || 1000;
+  if (totalSpend > budget) {
+    return fail(
+      'Total spend (' + totalSpend + ') exceeds your budget (' + budget + '). Please remove some teams or choose a cheaper captain.',
+      400
+    );
+  }
 
   // ── Write to KnockoutPreferences ─────────────────────────────────────────
   var sheet      = getSheet('KnockoutPreferences');
@@ -647,7 +659,7 @@ function handleSubmitKnockoutPreferences(body) {
   var playerName = player['Name'];
 
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['Player ID', 'Player Name', 'Team Purchased', 'Price Paid', 'Captain Name', 'Total Spend']);
+    sheet.appendRow(['Player ID', 'Player Name', 'Team Purchased', 'Price Paid', 'Captain Name', 'Captain Price Paid', 'Total Spend']);
   }
 
   // Delete all existing rows for this player, then append one row per team
@@ -655,7 +667,7 @@ function handleSubmitKnockoutPreferences(body) {
 
   for (var r = 0; r < teamsPurchased.length; r++) {
     var tName = String(teamsPurchased[r]);
-    sheet.appendRow([playerId, playerName, tName, priceMap[tName], captain, totalSpend]);
+    sheet.appendRow([playerId, playerName, tName, priceMap[tName], captain, captainPrice, totalSpend]);
   }
 
   return ok({

@@ -130,8 +130,9 @@ export default function Leaderboard({ onRowsChange, teamsByName = {} }) {
     const result = await getLeaderboard();
     if (result.ok) {
       const data = result.data ?? [];
-      setRows(data);
-      onRowsChange?.(data);
+      const sorted = [...data].sort((a, b) => (a['Rank'] ?? Infinity) - (b['Rank'] ?? Infinity));
+      setRows(sorted);
+      onRowsChange?.(sorted);
     } else {
       setError(result.error ?? 'Failed to load leaderboard.');
     }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getConfig } from './api.js';
+import { getConfig, getTeams } from './api.js';
 import PhaseBanner from './components/PhaseBanner.jsx';
 import Leaderboard from './components/Leaderboard.jsx';
 import MatchResults from './components/MatchResults.jsx';
@@ -113,6 +113,7 @@ export default function App() {
   const [player, setPlayer] = useState(null);
   const [view, setView] = useState('leaderboard');
   const [leaderRows, setLeaderRows] = useState([]);
+  const [teamsByName, setTeamsByName] = useState({});
 
   useEffect(() => {
     const stored = loadPlayerFromSession();
@@ -127,6 +128,15 @@ export default function App() {
     fetchConfig();
     const interval = setInterval(fetchConfig, 60_000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    getTeams().then(result => {
+      if (result.ok) {
+        const map = Object.fromEntries((result.data ?? []).map(t => [t['Team Name'], t]));
+        setTeamsByName(map);
+      }
+    });
   }, []);
 
   function handleSetPlayer(p) {
@@ -162,13 +172,13 @@ export default function App() {
       );
     }
     if (currentPhase === 'group_preferences') {
-      return <GroupPreferences player={player} />;
+      return <GroupPreferences player={player} teamsByName={teamsByName} />;
     }
     if (currentPhase === 'knockout_preferences') {
-      return <KnockoutPreferences player={player} />;
+      return <KnockoutPreferences player={player} teamsByName={teamsByName} />;
     }
     // Any other phase — show locked read-only picks
-    return <LockedPicks player={player} phase={currentPhase} />;
+    return <LockedPicks player={player} phase={currentPhase} teamsByName={teamsByName} />;
   }
 
   return (
@@ -233,8 +243,8 @@ export default function App() {
           <>
             <PhaseBanner config={config} />
             <StatsBar config={config} leaderRows={leaderRows} />
-            <Leaderboard onRowsChange={setLeaderRows} />
-            <MatchResults />
+            <Leaderboard onRowsChange={setLeaderRows} teamsByName={teamsByName} />
+            <MatchResults teamsByName={teamsByName} />
           </>
         )}
 

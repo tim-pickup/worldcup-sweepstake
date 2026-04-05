@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getMatches } from '../api.js';
 
-export default function MatchResults() {
+export default function MatchResults({ teamsByName = {} }) {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -58,11 +58,21 @@ export default function MatchResults() {
                 )}
               </div>
               <div className="match-card-teams">
-                <span className="match-card-team home">{m['Home Team']}</span>
+                <span className="match-card-team home">
+                  {teamsByName[m['Home Team']]?.['Flag URL'] && (
+                    <img src={teamsByName[m['Home Team']]['Flag URL']} alt="" className="team-flag" />
+                  )}
+                  {m['Home Team']}
+                </span>
                 <span className="match-card-score">
                   {hasScore ? `${homeScore} – ${awayScore}` : 'vs'}
                 </span>
-                <span className="match-card-team away">{m['Away Team']}</span>
+                <span className="match-card-team away">
+                  {teamsByName[m['Away Team']]?.['Flag URL'] && (
+                    <img src={teamsByName[m['Away Team']]['Flag URL']} alt="" className="team-flag" />
+                  )}
+                  {m['Away Team']}
+                </span>
               </div>
               <div className="match-card-date">{dateStr}</div>
             </div>

@@ -93,7 +93,7 @@ export default function LandingPage({ config, onRegister }) {
     });
   }, []);
 
-  const spotsLeft = Math.max(0, 40 - names.length);  return (
+  return (
     <div className="landing">
       {/* ── Hero ─────────────────────────────────────────────────── */}
       <div className="landing-hero">

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getKnockoutTeams, getSquads, getConfig, submitKnockoutPreferences } from '../api.js';
 
-export default function KnockoutPreferences({ player }) {
+export default function KnockoutPreferences({ player, teamsByName = {} }) {
   const { pin, name } = player;
   const [teams, setTeams] = useState([]);
   const [squads, setSquads] = useState({});
@@ -186,7 +186,6 @@ export default function KnockoutPreferences({ player }) {
         <div className="knockout-teams-grid">
           {teams.map((t) => {
             const name = t['Team Name'];
-            const flag = t['Flag Emoji'] ?? '🏳';
             const price = t['Price'] ?? 0;
             const isSelected = selected.has(name);
             const wouldExceed = !isSelected && totalSpend + price > budget;
@@ -207,7 +206,11 @@ export default function KnockoutPreferences({ player }) {
                 }}
                 style={{ opacity: wouldExceed && !isSelected ? 0.45 : 1, cursor: submitted ? 'default' : 'pointer' }}
               >
-                <div className="knockout-team-flag">{flag}</div>
+                <div className="knockout-team-flag">
+                  {teamsByName[name]?.['Flag URL']
+                    ? <img src={teamsByName[name]['Flag URL']} alt="" className="team-flag" style={{ width: '2em' }} />
+                    : '🏳'}
+                </div>
                 <div className="knockout-team-name">{name}</div>
                 <div className="knockout-team-price">{price} coins</div>
               </div>

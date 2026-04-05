@@ -4,7 +4,7 @@ import { getLeaderboard, getPlayerPicks } from '../api.js';
 const RANK_EMOJI = { 1: '🥇', 2: '🥈', 3: '🥉' };
 const TIER_LABELS = { 1: 'Tier 1', 2: 'Tier 2', 3: 'Tier 3' };
 
-function TeamPickCard({ alloc, groupPrefs }) {
+function TeamPickCard({ alloc, groupPrefs, teamsByName }) {
   const tier = alloc['Tier'] ?? alloc['tier'];
   const teamName = alloc['Team Name'];
   const pref = groupPrefs?.find(p => p['Team Name'] === teamName);
@@ -13,7 +13,12 @@ function TeamPickCard({ alloc, groupPrefs }) {
 
   return (
     <div className={`team-pick-card tier-${tier}`}>
-      <div className="team-pick-name">{teamName}</div>
+      <div className="team-pick-name">
+        {teamsByName?.[teamName]?.['Flag URL'] && (
+          <img src={teamsByName[teamName]['Flag URL']} alt="" className="team-flag" />
+        )}
+        {teamName}
+      </div>
       <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', marginBottom: '0.3rem' }}>
         <span className={`badge badge-tier-${tier}`}>{TIER_LABELS[tier] ?? `Tier ${tier}`}</span>
         {tier === 2 && mechanism && (
@@ -30,7 +35,7 @@ function TeamPickCard({ alloc, groupPrefs }) {
   );
 }
 
-function ExpandedPicks({ playerName }) {
+function ExpandedPicks({ playerName, teamsByName }) {
   const [picks, setPicks] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -81,6 +86,7 @@ function ExpandedPicks({ playerName }) {
                   key={alloc['Team Name']}
                   alloc={alloc}
                   groupPrefs={groupPreferences}
+                  teamsByName={teamsByName}
                 />
               ))}
           </div>
@@ -96,6 +102,9 @@ function ExpandedPicks({ playerName }) {
           <div className="ko-picks-grid">
             {knockoutPreferences.map(row => (
               <span key={row['Team Purchased']} className="ko-pick-chip">
+                {teamsByName?.[row['Team Purchased']]?.['Flag URL'] && (
+                  <img src={teamsByName[row['Team Purchased']]['Flag URL']} alt="" className="team-flag" />
+                )}
                 {row['Team Purchased']}
                 <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
                   {row['Price Paid'] != null ? ` · ${row['Price Paid']}c` : ''}
@@ -109,7 +118,7 @@ function ExpandedPicks({ playerName }) {
   );
 }
 
-export default function Leaderboard({ onRowsChange }) {
+export default function Leaderboard({ onRowsChange, teamsByName = {} }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -198,7 +207,7 @@ export default function Leaderboard({ onRowsChange }) {
                   isOpen && (
                     <tr key={`picks-${name}`} className="picks-row">
                       <td colSpan={COL_COUNT}>
-                        <ExpandedPicks playerName={name} />
+                        <ExpandedPicks playerName={name} teamsByName={teamsByName} />
                       </td>
                     </tr>
                   ),

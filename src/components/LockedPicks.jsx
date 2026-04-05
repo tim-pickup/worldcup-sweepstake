@@ -10,7 +10,7 @@ const PHASE_CONTEXT = {
   complete:           'The tournament is complete. Final picks below.',
 };
 
-function TeamCard({ alloc, groupPrefs }) {
+function TeamCard({ alloc, groupPrefs, teamsByName }) {
   const tier = alloc['Tier'];
   const teamName = alloc['Team Name'];
   const pref = groupPrefs?.find(p => p['Team Name'] === teamName);
@@ -19,7 +19,12 @@ function TeamCard({ alloc, groupPrefs }) {
 
   return (
     <div className={`team-pick-card tier-${tier}`}>
-      <div className="team-pick-name">{teamName}</div>
+      <div className="team-pick-name">
+        {teamsByName?.[teamName]?.['Flag URL'] && (
+          <img src={teamsByName[teamName]['Flag URL']} alt="" className="team-flag" />
+        )}
+        {teamName}
+      </div>
       <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', marginBottom: '0.3rem', flexWrap: 'wrap' }}>
         <span className={`badge badge-tier-${tier}`}>{TIER_LABELS[tier] ?? `Tier ${tier}`}</span>
         {tier === 2 && mechanism && (
@@ -36,7 +41,7 @@ function TeamCard({ alloc, groupPrefs }) {
   );
 }
 
-export default function LockedPicks({ player, phase }) {
+export default function LockedPicks({ player, phase, teamsByName = {} }) {
   const [allocations, setAllocations] = useState([]);
   const [groupPrefs, setGroupPrefs] = useState([]);
   const [koPrefs, setKoPrefs] = useState([]);
@@ -96,6 +101,7 @@ export default function LockedPicks({ player, phase }) {
                 key={alloc['Team Name']}
                 alloc={alloc}
                 groupPrefs={groupPrefs}
+                teamsByName={teamsByName}
               />
             ))}
           </div>
@@ -129,6 +135,9 @@ export default function LockedPicks({ player, phase }) {
               <div className="ko-picks-grid">
                 {koPrefs.map(row => (
                   <span key={row['Team Purchased']} className="ko-pick-chip">
+                    {teamsByName[row['Team Purchased']]?.['Flag URL'] && (
+                      <img src={teamsByName[row['Team Purchased']]['Flag URL']} alt="" className="team-flag" />
+                    )}
                     {row['Team Purchased']}
                     {row['Price Paid'] != null && (
                       <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>

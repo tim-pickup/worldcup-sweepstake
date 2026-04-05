@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getAllocations, getSquads, submitGroupPreferences } from '../api.js';
 
-export default function GroupPreferences({ player }) {
+export default function GroupPreferences({ player, teamsByName = {} }) {
   const { pin, name } = player;
   const [allocations, setAllocations] = useState([]);
   const [squads, setSquads] = useState({});
@@ -127,7 +127,12 @@ export default function GroupPreferences({ player }) {
           return (
             <div className="team-section" key={team}>
               <div className="team-section-header">
-                <span className="team-section-name">{team}</span>
+                <span className="team-section-name">
+                  {teamsByName[team]?.['Flag URL'] && (
+                    <img src={teamsByName[team]['Flag URL']} alt="" className="team-flag" />
+                  )}
+                  {team}
+                </span>
                 <span className={tierClass}>Tier {tier}</span>
               </div>
 

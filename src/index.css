@@ -586,6 +586,14 @@ select option {
   margin-bottom: 0.5rem;
 }
 
+.team-flag {
+  width: 1.4em;
+  height: auto;
+  vertical-align: middle;
+  margin-right: 0.4em;
+  border-radius: 2px;
+}
+
 .team-picks-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));

@@ -771,6 +771,18 @@ select option {
   background: linear-gradient(90deg, var(--danger), #ff6b6b);
 }
 
+.captain-price-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.1em 0.45em;
+  border-radius: 999px;
+  background: var(--gold, #f0c040);
+  color: #1a1a2e;
+  font-size: 0.72rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
 /* ─── Knockout Team Grid ─────────────────────────────────────────────────────── */
 .knockout-teams-grid {
   display: grid;

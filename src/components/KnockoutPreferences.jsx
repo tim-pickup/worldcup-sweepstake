@@ -4,7 +4,7 @@ import { getKnockoutTeams, getSquads, getConfig, submitKnockoutPreferences } fro
 export default function KnockoutPreferences({ player, teamsByName = {} }) {
   const { pin, name } = player;
   const [teams, setTeams] = useState([]);
-  const [squads, setSquads] = useState({});
+  const [knockoutPlayers, setKnockoutPlayers] = useState([]); // all players from all knockout teams
   const [budget, setBudget] = useState(1000);
   const [selected, setSelected] = useState(new Set()); // Set of team names
   const [captain, setCaptain] = useState('');
@@ -35,19 +35,32 @@ export default function KnockoutPreferences({ player, teamsByName = {} }) {
         return;
       }
 
-      setTeams(knockoutResult.data?.teams ?? []);
-      setSquads(squadResult.data ?? {});
+      const fetchedTeams = knockoutResult.data?.teams ?? [];
+      setTeams(fetchedTeams);
 
       if (configResult.ok) {
         setBudget(configResult.data?.knockoutBudget ?? 1000);
       }
 
+      // Build flat list of all players from knockout teams, with prices
+      const knockoutTeamNames = new Set(fetchedTeams.map(t => t['Team Name']));
+      const allPlayers = [];
+      for (const [team, players] of Object.entries(squadResult.data ?? {})) {
+        if (knockoutTeamNames.has(team)) {
+          players.forEach(p => allPlayers.push({ ...p, team }));
+        }
+      }
+      // Sort by price descending, then name ascending
+      allPlayers.sort((a, b) =>
+        (b.playerPrice ?? 0) - (a.playerPrice ?? 0) || (a.playerName ?? '').localeCompare(b.playerName ?? '')
+      );
+      setKnockoutPlayers(allPlayers);
+
       // Pre-populate from existing preferences
       const existing = knockoutResult.data?.myPreferences ?? [];
       if (existing.length > 0) {
-        const teamNames = existing.map((row) => row['Team Purchased']).filter(Boolean);
+        const teamNames = existing.map(row => row['Team Purchased']).filter(Boolean);
         setSelected(new Set(teamNames));
-        // Use captain from the first row
         const existingCaptain = existing[0]?.['Captain Name'];
         if (existingCaptain) setCaptain(existingCaptain);
       }
@@ -57,41 +70,28 @@ export default function KnockoutPreferences({ player, teamsByName = {} }) {
     fetchData();
   }, [pin]);
 
-  // Compute total spend
-  const totalSpend = useMemo(() => {
-    return teams
-      .filter((t) => selected.has(t['Team Name']))
-      .reduce((sum, t) => sum + (t['Price'] ?? 0), 0);
-  }, [teams, selected]);
+  // Captain's individual price
+  const captainPrice = useMemo(() => {
+    const p = knockoutPlayers.find(p => p.playerName === captain);
+    return p?.playerPrice ?? 0;
+  }, [captain, knockoutPlayers]);
 
+  // Total spend = team costs + captain price
+  const teamSpend = useMemo(() =>
+    teams.filter(t => selected.has(t['Team Name'])).reduce((sum, t) => sum + (t['Price'] ?? 0), 0),
+  [teams, selected]);
+
+  const totalSpend = teamSpend + captainPrice;
   const remaining = budget - totalSpend;
   const overBudget = totalSpend > budget;
 
-  // Build captain options from squads of selected teams
-  const captainOptions = useMemo(() => {
-    const playerSet = new Map();
-    for (const teamName of selected) {
-      const players = squads[teamName] ?? [];
-      players.forEach((p) => {
-        if (p.playerName && !playerSet.has(p.playerName)) {
-          playerSet.set(p.playerName, p);
-        }
-      });
-    }
-    return Array.from(playerSet.values()).sort((a, b) =>
-      (a.playerName ?? '').localeCompare(b.playerName ?? '')
-    );
-  }, [selected, squads]);
-
   function toggleTeam(teamName, price) {
     if (submitted) return;
-    setSelected((prev) => {
+    setSelected(prev => {
       const next = new Set(prev);
       if (next.has(teamName)) {
         next.delete(teamName);
-        // Clear captain if it was from this team's squad
       } else {
-        // Check if adding this team would still be within budget
         const newSpend = totalSpend + price;
         if (newSpend > budget) {
           setError(`Adding ${teamName} would exceed your budget of ${budget} coins.`);
@@ -102,8 +102,6 @@ export default function KnockoutPreferences({ player, teamsByName = {} }) {
       setError('');
       return next;
     });
-    // Reset captain if no longer valid will be handled in render
-    setCaptain((prev) => prev); // trigger re-check via captainOptions useMemo
   }
 
   async function handleSubmit(e) {
@@ -120,7 +118,7 @@ export default function KnockoutPreferences({ player, teamsByName = {} }) {
       return;
     }
     if (overBudget) {
-      setError(`You have exceeded your budget. Please deselect some teams.`);
+      setError('You have exceeded your budget. Please deselect some teams or choose a cheaper captain.');
       return;
     }
 
@@ -141,21 +139,22 @@ export default function KnockoutPreferences({ player, teamsByName = {} }) {
     }
   }
 
-  // If selected captain is no longer in available options, clear it
-  const captainStillValid = captainOptions.some((p) => p.playerName === captain);
-  if (captain && !captainStillValid && captainOptions.length >= 0) {
-    // Defer state update to avoid render-phase setState
-  }
-
   if (loading) return <div className="loading">Loading knockout preferences…</div>;
 
   const fillPct = Math.min(100, (totalSpend / budget) * 100);
+
+  // Group knockoutPlayers by team for the captain <optgroup> selector
+  const playersByTeam = knockoutPlayers.reduce((acc, p) => {
+    (acc[p.team] ??= []).push(p);
+    return acc;
+  }, {});
 
   return (
     <div className="card">
       <h2 className="card-title">🏆 Knockout Stage Auction</h2>
       <p style={{ marginBottom: '1rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-        Use your coin budget to buy knockout teams. Select a captain from your purchased teams.
+        Use your coin budget to buy knockout teams and select a captain from any team still in the tournament.
+        Teams and captains are priced individually — both cost coins from your shared budget.
       </p>
 
       {error && <div className="error">{error}</div>}
@@ -164,7 +163,14 @@ export default function KnockoutPreferences({ player, teamsByName = {} }) {
       {/* Budget bar */}
       <div className="budget-bar-wrap">
         <div className="budget-bar-labels">
-          <span>Spent: <strong>{totalSpend}</strong> / {budget} coins</span>
+          <span>
+            Spent: <strong>{totalSpend}</strong> / {budget} coins
+            {(teamSpend > 0 || captainPrice > 0) && (
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginLeft: '0.5rem' }}>
+                (teams: {teamSpend}{captainPrice > 0 ? ` + captain: ${captainPrice}` : ''})
+              </span>
+            )}
+          </span>
           <span style={{ color: overBudget ? 'var(--danger)' : 'var(--green)' }}>
             {overBudget ? `⚠ ${Math.abs(remaining)} over budget` : `${remaining} remaining`}
           </span>
@@ -184,61 +190,68 @@ export default function KnockoutPreferences({ player, teamsByName = {} }) {
           <div className="empty-state">No knockout teams available yet.</div>
         )}
         <div className="knockout-teams-grid">
-          {teams.map((t) => {
-            const name = t['Team Name'];
+          {teams.map(t => {
+            const teamName = t['Team Name'];
             const price = t['Price'] ?? 0;
-            const isSelected = selected.has(name);
+            const isSelected = selected.has(teamName);
             const wouldExceed = !isSelected && totalSpend + price > budget;
 
             return (
               <div
-                key={name}
+                key={teamName}
                 className={`knockout-team-card${isSelected ? ' selected' : ''}${wouldExceed ? ' disabled' : ''}`}
-                onClick={() => !wouldExceed && !submitted && toggleTeam(name, price)}
+                onClick={() => !wouldExceed && !submitted && toggleTeam(teamName, price)}
                 role="checkbox"
                 aria-checked={isSelected}
                 tabIndex={submitted ? -1 : 0}
-                onKeyDown={(e) => {
+                onKeyDown={e => {
                   if ((e.key === 'Enter' || e.key === ' ') && !wouldExceed && !submitted) {
                     e.preventDefault();
-                    toggleTeam(name, price);
+                    toggleTeam(teamName, price);
                   }
                 }}
                 style={{ opacity: wouldExceed && !isSelected ? 0.45 : 1, cursor: submitted ? 'default' : 'pointer' }}
               >
                 <div className="knockout-team-flag">
-                  {teamsByName[name]?.['Flag URL']
-                    ? <img src={teamsByName[name]['Flag URL']} alt="" className="team-flag" style={{ width: '2em' }} />
+                  {teamsByName[teamName]?.['Flag URL']
+                    ? <img src={teamsByName[teamName]['Flag URL']} alt="" className="team-flag" style={{ width: '2em' }} />
                     : '🏳'}
                 </div>
-                <div className="knockout-team-name">{name}</div>
+                <div className="knockout-team-name">{teamName}</div>
                 <div className="knockout-team-price">{price} coins</div>
               </div>
             );
           })}
         </div>
 
-        {/* Captain selector */}
-        {selected.size > 0 && (
-          <div className="form-group">
-            <label htmlFor="knockout-captain">Captain</label>
-            <select
-              id="knockout-captain"
-              value={captain}
-              onChange={(e) => setCaptain(e.target.value)}
-              disabled={submitting || submitted}
-              required
-            >
-              <option value="">— Select a captain from your teams —</option>
-              {captainOptions.map((p) => (
-                <option key={p.playerName} value={p.playerName}>
-                  {p.shirtNumber ? `${p.shirtNumber}. ` : ''}{p.playerName}
-                  {p.position ? ` (${p.position})` : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+        {/* Captain selector — all players from all knockout teams, grouped by team */}
+        <div className="form-group" style={{ marginTop: '1.25rem' }}>
+          <label htmlFor="knockout-captain">
+            Captain
+            {captain && captainPrice > 0 && (
+              <span className="captain-price-badge">{captainPrice} coins</span>
+            )}
+          </label>
+          <select
+            id="knockout-captain"
+            value={captain}
+            onChange={e => setCaptain(e.target.value)}
+            disabled={submitting || submitted}
+            required
+          >
+            <option value="">— Select a captain from any knockout team —</option>
+            {Object.entries(playersByTeam).map(([team, players]) => (
+              <optgroup key={team} label={team}>
+                {players.map(p => (
+                  <option key={p.playerName} value={p.playerName}>
+                    {p.shirtNumber ? `${p.shirtNumber}. ` : ''}{p.playerName}
+                    {p.position ? ` (${p.position})` : ''} — {p.playerPrice ?? 0} coins
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </div>
 
         <button
           type="submit"

@@ -109,13 +109,13 @@ export default function PreGamePage({ config }) {
           </div>
 
           <h1 className="pregame-title">
-            Squads Are Set.<br />
-            <span className="pregame-title-accent">The Wait Begins.</span>
+            Registration Closed.<br />
+            <span className="pregame-title-accent">The Draw Is Coming.</span>
           </h1>
 
           <p className="pregame-subtitle">
             {loadingNames ? '…' : `${names.length} player${names.length !== 1 ? 's' : ''}`} registered
-            · Teams allocated · Group picks opening soon
+            · Teams drawn live · Picks open after the draw
           </p>
         </div>
       </div>
@@ -125,10 +125,10 @@ export default function PreGamePage({ config }) {
         <div className="pregame-section-inner">
           <div className="pregame-countdowns-grid">
             <CountdownBlock
-              icon="⚽"
-              title="Group Picks Open"
-              subtitle="Submit your captain preferences for the group stage"
-              target={config?.groupPrefsOpen}
+              icon="🎲"
+              title="Group Draw"
+              subtitle="Watch live as teams are randomly allocated to players"
+              target={config?.groupDrawDate}
               accentClass="pregame-block-gold"
             />
             <div className="pregame-countdowns-divider">
@@ -185,10 +185,16 @@ export default function PreGamePage({ config }) {
           <div className="pregame-timeline">
             {[
               {
+                icon: '🎲',
+                title: 'Group Draw',
+                desc: 'Teams are randomly drawn and allocated to players in a live event. Three teams per player — one from each tier.',
+                accent: 'var(--gold)',
+              },
+              {
                 icon: '⚽',
                 title: 'Group Picks Open',
-                desc: 'Choose a captain for each of your three allocated teams. Your Tier 2 team mechanism can also be set.',
-                accent: 'var(--gold)',
+                desc: 'After the draw, choose a captain for each of your three allocated teams and set your Tier 2 mechanism.',
+                accent: '#fb923c',
               },
               {
                 icon: '🌍',

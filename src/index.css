@@ -1971,6 +1971,288 @@ select option {
   line-height: 1.65;
 }
 
+/* ─── Tournament Countdown Page (State D) ───────────────────────────────────── */
+.tc-page {
+  position: relative;
+  overflow: hidden;
+  margin: -1.5rem -1rem 0;
+  background: var(--bg);
+  min-height: calc(100vh - 56px);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Background glow layers */
+.tc-glow {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+.tc-glow-a {
+  width: 800px; height: 800px;
+  top: -300px; left: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(circle, rgba(63, 185, 80, 0.16) 0%, transparent 60%);
+  animation: tc-pulse-a 5s ease-in-out infinite;
+}
+.tc-glow-b {
+  width: 500px; height: 500px;
+  top: 100px; left: -150px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, transparent 65%);
+  animation: tc-pulse-b 7s ease-in-out infinite;
+}
+.tc-glow-c {
+  width: 500px; height: 500px;
+  top: 80px; right: -150px;
+  background: radial-gradient(circle, rgba(88, 166, 255, 0.08) 0%, transparent 65%);
+  animation: tc-pulse-b 6s ease-in-out infinite reverse;
+}
+
+@keyframes tc-pulse-a {
+  0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+  50%       { opacity: 0.7; transform: translateX(-50%) scale(1.12); }
+}
+@keyframes tc-pulse-b {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+/* Hero section */
+.tc-hero {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 4.5rem 1.5rem 3rem;
+  max-width: 820px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.tc-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 1.5rem;
+}
+.tc-eyebrow-star {
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+
+.tc-headline {
+  font-size: clamp(2.4rem, 6vw, 4rem);
+  font-weight: 900;
+  line-height: 1.1;
+  color: var(--text-heading);
+  letter-spacing: -0.02em;
+  margin-bottom: 2.5rem;
+}
+
+.tc-headline-accent {
+  background: linear-gradient(135deg, var(--green) 0%, #22c55e 45%, #86efac 70%, var(--green) 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer-text 3s ease infinite;
+}
+
+/* The massive countdown */
+.tc-countdown-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 2.25rem;
+  flex-wrap: wrap;
+}
+
+.tc-unit {
+  background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface-3) 100%);
+  border: 1px solid rgba(63, 185, 80, 0.28);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.25rem;
+  min-width: 96px;
+  text-align: center;
+  box-shadow:
+    0 0 28px rgba(63, 185, 80, 0.09),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  animation: tc-unit-glow 4s ease-in-out infinite;
+}
+
+@keyframes tc-unit-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(63, 185, 80, 0.09), inset 0 1px 0 rgba(255,255,255,0.04); }
+  50%       { box-shadow: 0 0 48px rgba(63, 185, 80, 0.22), inset 0 1px 0 rgba(255,255,255,0.06); }
+}
+
+.tc-number {
+  font-size: clamp(2.8rem, 6vw, 4.2rem);
+  font-weight: 900;
+  color: var(--green);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  text-shadow: 0 0 32px rgba(63, 185, 80, 0.45);
+}
+
+.tc-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  margin-top: 0.4rem;
+}
+
+.tc-sep {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 900;
+  color: rgba(63, 185, 80, 0.35);
+  line-height: 1;
+  margin-bottom: 1.5rem;
+  flex-shrink: 0;
+}
+
+.tc-kickoff {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--green);
+  margin-bottom: 2rem;
+  text-shadow: 0 0 32px rgba(63, 185, 80, 0.5);
+  animation: tc-pulse-a 1.5s ease-in-out infinite;
+}
+
+/* Picks locked pill */
+.tc-locked-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.45rem 1.1rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+.tc-locked-icon { font-size: 0.9rem; }
+.tc-locked-pill strong { color: var(--text-heading); font-weight: 700; }
+
+/* Host nations */
+.tc-hosts {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.tc-host-sep { color: var(--border-bright); }
+
+/* Section divider */
+.tc-section-divider {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 1.5rem;
+  margin: 0.5rem 0 1.25rem;
+}
+.tc-divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.tc-divider-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Scrolling flag marquee */
+.tc-marquee-wrap {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  width: 100%;
+}
+
+.tc-marquee-fade {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 80px;
+  z-index: 2;
+  pointer-events: none;
+}
+.tc-fade-left  { left: 0;  background: linear-gradient(to right, var(--bg), transparent); }
+.tc-fade-right { right: 0; background: linear-gradient(to left,  var(--bg), transparent); }
+
+.tc-marquee-track {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.25rem 0;
+  width: max-content;
+  animation: tc-marquee 40s linear infinite;
+}
+.tc-marquee-reverse {
+  animation-direction: reverse;
+  animation-duration: 35s;
+}
+
+@keyframes tc-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.tc-flag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+  transition: border-color var(--transition);
+  flex-shrink: 0;
+}
+.tc-flag-chip-alt {
+  background: var(--surface-3);
+  border-color: rgba(63, 185, 80, 0.15);
+}
+
+.tc-flag-emoji { font-size: 1.1rem; line-height: 1; }
+.tc-flag-name  { color: var(--text-muted); }
+
+/* Bottom tagline */
+.tc-tagline {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 2.5rem 1.5rem 3.5rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+.tc-tagline-accent {
+  color: var(--gold);
+}
+
 /* ─── Responsive ─────────────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
   .nav {
@@ -2016,4 +2298,10 @@ select option {
   .pregame-players-section { padding: 2rem 1rem; }
   .pregame-whats-next    { padding: 2rem 1rem 3rem; }
   .pregame-avatars-grid  { grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); }
+
+  .tc-hero     { padding: 3rem 1rem 2rem; }
+  .tc-unit     { min-width: 64px; padding: 0.8rem 0.75rem; }
+  .tc-number   { font-size: 2.2rem; }
+  .tc-sep      { font-size: 1.6rem; }
+  .tc-headline { margin-bottom: 2rem; }
 }

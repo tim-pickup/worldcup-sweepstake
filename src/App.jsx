@@ -6,6 +6,7 @@ import MatchResults from './components/MatchResults.jsx';
 import RegistrationForm from './components/RegistrationForm.jsx';
 import LoginForm from './components/LoginForm.jsx';
 import LandingPage from './components/LandingPage.jsx';
+import PreGamePage from './components/PreGamePage.jsx';
 import GroupPreferences from './components/GroupPreferences.jsx';
 import KnockoutPreferences from './components/KnockoutPreferences.jsx';
 import LockedPicks from './components/LockedPicks.jsx';
@@ -46,6 +47,55 @@ const PHASE_LABELS = {
   complete:               'Phase 6 — Complete',
   between_phases:         'Preparing…',
 };
+
+// Phases where the leaderboard is meaningful (scoring has started)
+const SCORING_PHASES = new Set(['group_scoring', 'knockout_preferences', 'knockout_scoring', 'complete']);
+
+function WC2026Logo() {
+  return (
+    <svg
+      className="nav-wc-trophy"
+      viewBox="0 0 32 38"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-label="World Cup 2026 Trophy"
+    >
+      <defs>
+        <linearGradient id="trophy-grad" x1="0" y1="0" x2="32" y2="38" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#fbbf24" />
+          <stop offset="55%" stopColor="#f59e0b" />
+          <stop offset="100%" stopColor="#d97706" />
+        </linearGradient>
+      </defs>
+      {/* Cup body */}
+      <path d="M7 3h18v13a9 9 0 01-18 0V3z" fill="url(#trophy-grad)" />
+      {/* Left handle */}
+      <path d="M7 6.5H4A3.5 3.5 0 004 13h3" stroke="url(#trophy-grad)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+      {/* Right handle */}
+      <path d="M25 6.5h3A3.5 3.5 0 0128 13h-3" stroke="url(#trophy-grad)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+      {/* Stars — three host nations */}
+      <text x="16" y="13" textAnchor="middle" fontSize="5.5" fill="rgba(255,255,255,0.88)" letterSpacing="1.5">★★★</text>
+      {/* Stem */}
+      <rect x="14" y="16" width="4" height="8" rx="1" fill="url(#trophy-grad)" />
+      {/* Base */}
+      <rect x="8.5" y="24" width="15" height="4" rx="2" fill="url(#trophy-grad)" />
+      {/* Base shadow line */}
+      <rect x="10" y="27.5" width="12" height="0.75" rx="0.375" fill="rgba(0,0,0,0.25)" />
+    </svg>
+  );
+}
+
+function ClaudeBadge() {
+  return (
+    <div className="nav-claude-badge">
+      {/* Anthropic-style sparkle/diamond icon */}
+      <svg className="nav-claude-icon" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 1.5L9.6 6.4L14.5 8L9.6 9.6L8 14.5L6.4 9.6L1.5 8L6.4 6.4L8 1.5Z" />
+      </svg>
+      <span>Powered by Claude</span>
+    </div>
+  );
+}
 
 function StatsBar({ config, leaderRows }) {
   const phase = config?.currentPhase ?? 'between_phases';
@@ -147,18 +197,29 @@ export default function App() {
   function handleLogout() {
     setPlayer(null);
     savePlayerToSession(null);
-    setView('leaderboard');
+    if (isRegistrationPhase) {
+      setView('landing');
+    } else if (isPreGamePhase) {
+      setView('pregame');
+    } else {
+      setView('leaderboard');
+    }
   }
 
   const currentPhase = config?.currentPhase ?? null;
   const isRegistrationPhase = currentPhase === 'registration';
+  const isPreGamePhase = currentPhase !== null && !isRegistrationPhase && !SCORING_PHASES.has(currentPhase);
+  const showLeaderboard = currentPhase !== null && SCORING_PHASES.has(currentPhase);
 
-  // During registration, land on the landing page by default
+  // Redirect to the right home view when the phase loads or changes
   useEffect(() => {
+    if (!currentPhase) return;
     if (isRegistrationPhase && view === 'leaderboard') {
       setView('landing');
+    } else if (isPreGamePhase && view === 'leaderboard') {
+      setView('pregame');
     }
-  }, [isRegistrationPhase]);
+  }, [currentPhase]);
 
   function renderPicksContent() {
     if (!player) {
@@ -184,9 +245,18 @@ export default function App() {
   return (
     <div className="app">
       <nav className="nav">
-        <span className="nav-title">🏆 WC2026</span>
+        <div className="nav-brand">
+          <WC2026Logo />
+          <div className="nav-brand-text">
+            <div className="nav-brand-title">World Cup</div>
+            <div className="nav-brand-year">2026</div>
+          </div>
+          <div className="nav-brand-sep" />
+          <ClaudeBadge />
+        </div>
+
         <div className="nav-actions">
-          {isRegistrationPhase ? (
+          {isRegistrationPhase && (
             <>
               <button
                 className={`nav-btn${view === 'landing' ? ' active' : ''}`}
@@ -201,24 +271,33 @@ export default function App() {
                 Register
               </button>
             </>
-          ) : (
-            <>
-              <button
-                className={`nav-btn${view === 'leaderboard' ? ' active' : ''}`}
-                onClick={() => setView('leaderboard')}
-              >
-                Leaderboard
-              </button>
+          )}
 
-              {!player && (
-                <button
-                  className={`nav-btn${view === 'login' ? ' active' : ''}`}
-                  onClick={() => setView('login')}
-                >
-                  Login
-                </button>
-              )}
-            </>
+          {isPreGamePhase && (
+            <button
+              className={`nav-btn${view === 'pregame' ? ' active' : ''}`}
+              onClick={() => setView('pregame')}
+            >
+              Home
+            </button>
+          )}
+
+          {showLeaderboard && (
+            <button
+              className={`nav-btn${view === 'leaderboard' ? ' active' : ''}`}
+              onClick={() => setView('leaderboard')}
+            >
+              Leaderboard
+            </button>
+          )}
+
+          {!player && !isRegistrationPhase && (
+            <button
+              className={`nav-btn${view === 'login' ? ' active' : ''}`}
+              onClick={() => setView('login')}
+            >
+              Login
+            </button>
           )}
 
           {player && (
@@ -239,13 +318,17 @@ export default function App() {
       </nav>
 
       <main className="app-main">
-        {view === 'leaderboard' && (
+        {view === 'leaderboard' && showLeaderboard && (
           <>
             <PhaseBanner config={config} />
             <StatsBar config={config} leaderRows={leaderRows} />
             <Leaderboard onRowsChange={setLeaderRows} teamsByName={teamsByName} />
             <MatchResults teamsByName={teamsByName} />
           </>
+        )}
+
+        {view === 'pregame' && (
+          <PreGamePage config={config} />
         )}
 
         {view === 'landing' && (
@@ -259,7 +342,7 @@ export default function App() {
           <RegistrationForm
             onSuccess={(p) => {
               handleSetPlayer(p);
-              setView('leaderboard');
+              setView('landing');
             }}
           />
         )}

@@ -80,7 +80,7 @@ body {
   position: sticky;
   top: 0;
   z-index: 100;
-  overflow: visible; /* allow bookmark logo to hang below */
+  overflow: visible; /* allow logo bookmark to hang below */
   background: linear-gradient(180deg, #1c2128 0%, #161b22 100%);
   border-bottom: 1px solid var(--border);
   display: flex;
@@ -1400,12 +1400,12 @@ select option {
   flex-shrink: 0;
 }
 
-/* Bookmark logo that hangs below the nav bar */
+/* Logo bookmark — hangs below the sticky nav like a tab */
 .nav-logo-hang {
-  width: 52px;
-  height: 56px; /* matches nav height — acts as the anchor */
-  flex-shrink: 0;
   position: relative;
+  width: 52px;
+  height: 56px; /* matches nav height — sets the flex footprint */
+  flex-shrink: 0;
 }
 
 .nav-wc-logo-img {
@@ -1413,20 +1413,18 @@ select option {
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  height: 80px;   /* hangs ~24px below nav bottom */
+  height: 82px;      /* 56px nav + 26px hanging below */
   width: auto;
-  max-width: 60px;
+  max-width: 58px;
   object-fit: contain;
   object-position: top center;
-  /* Bookmark shape: squared top (flush with nav), rounded bottom */
-  border-radius: 0 0 12px 12px;
-  background: var(--surface-3);
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  /* Bookmark shape: flush top, rounded bottom */
+  border-radius: 0 0 10px 10px;
+  background: #161b22; /* match nav background */
+  border: 1px solid rgba(245, 158, 11, 0.28);
   border-top: none;
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.55),
-    0 2px 8px rgba(245, 158, 11, 0.12);
-  padding: 4px 6px 10px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(245, 158, 11, 0.1);
+  padding: 4px 5px 10px;
   z-index: 101;
 }
 
@@ -2370,6 +2368,165 @@ select option {
   color: var(--gold);
 }
 
+/* ─── Draw Allocations Table ─────────────────────────────────────────────────── */
+.draw-section {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 2.25rem 1rem;
+}
+
+.draw-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.draw-card-header {
+  padding: 1rem 1.25rem;
+  background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface) 100%);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.draw-card-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-heading);
+  letter-spacing: 0.01em;
+}
+
+.draw-card-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
+
+.draw-table-wrap {
+  overflow-x: auto;
+}
+
+.draw-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 500px;
+}
+
+.draw-table thead th {
+  padding: 0.6rem 1rem;
+  text-align: left;
+  background: var(--surface-3);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.draw-col-player {
+  width: 22%;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.draw-col-tier {
+  width: 26%;
+}
+
+/* Tier header badges */
+.draw-tier-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.22rem 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.draw-tier-1 { background: var(--tier1-dim); color: var(--tier1); border: 1px solid rgba(255,215,0,0.2); }
+.draw-tier-2 { background: var(--tier2-dim); color: var(--tier2); border: 1px solid rgba(176,184,193,0.2); }
+.draw-tier-3 { background: var(--tier3-dim); color: var(--tier3); border: 1px solid rgba(205,127,50,0.2); }
+
+/* Rows */
+.draw-row {
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition);
+}
+.draw-row:hover { background: var(--surface-2); }
+.draw-row:last-child { border-bottom: none; }
+
+.draw-cell-player {
+  padding: 0.75rem 1rem;
+  vertical-align: middle;
+}
+
+.draw-player-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+/* Team cells — tier-tinted left border */
+.draw-cell-team {
+  padding: 0.6rem 0.85rem;
+  vertical-align: middle;
+  border-left: 1px solid var(--border);
+}
+.draw-cell-t1 { border-left-color: rgba(255, 215, 0, 0.22); }
+.draw-cell-t2 { border-left-color: rgba(176, 184, 193, 0.18); }
+.draw-cell-t3 { border-left-color: rgba(205, 127, 50, 0.18); }
+
+/* Team chip */
+.draw-team-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.28rem 0.65rem 0.28rem 0.45rem;
+  transition: border-color var(--transition), background var(--transition);
+}
+.draw-cell-t1 .draw-team-chip {
+  background: rgba(255, 215, 0, 0.04);
+  border-color: rgba(255, 215, 0, 0.2);
+}
+.draw-cell-t1 .draw-team-chip:hover { border-color: rgba(255, 215, 0, 0.4); }
+.draw-cell-t2 .draw-team-chip { border-color: rgba(176, 184, 193, 0.15); }
+.draw-cell-t3 .draw-team-chip { border-color: rgba(205, 127, 50, 0.15); }
+
+.draw-flag-img {
+  width: 1.25rem;
+  height: auto;
+  border-radius: 2px;
+  display: block;
+  flex-shrink: 0;
+}
+.draw-flag-emoji { font-size: 1rem; line-height: 1; flex-shrink: 0; }
+
+.draw-team-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.draw-tbd { color: var(--text-muted); font-size: 0.85rem; }
+
+.draw-loading {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
 /* ─── Tournament Header ──────────────────────────────────────────────────────── */
 .tourn-header {
   background: var(--surface);
@@ -2695,7 +2852,8 @@ select option {
     padding-bottom: 0.5rem;
   }
 
-  .nav-wc-logo-img  { height: 64px; max-width: 48px; }
+  .nav-logo-hang    { width: 44px; }
+  .nav-wc-logo-img  { height: 68px; max-width: 48px; }
   .nav-claude-powered { display: none; }
   .nav-claude-name { font-size: 0.82rem; }
   .nav-btn   { padding: 0.28rem 0.6rem; font-size: 0.78rem; }

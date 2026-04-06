@@ -74,6 +74,11 @@ export function getMatches() {
   return get('getMatches');
 }
 
+/** All player-to-team allocations from the draw. Public — no auth required. */
+export function getAllAllocations() {
+  return get('getAllAllocations');
+}
+
 /**
  * Alphabetically-sorted list of registered player names.
  * Used to populate the login name picker.

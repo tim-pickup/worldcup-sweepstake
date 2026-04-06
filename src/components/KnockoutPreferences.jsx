@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getKnockoutTeams, getSquads, getConfig, submitKnockoutPreferences } from '../api.js';
+import Flag from './Flag.jsx';
 
 export default function KnockoutPreferences({ player, teamsByName = {} }) {
   const { pin, name } = player;
@@ -213,9 +214,7 @@ export default function KnockoutPreferences({ player, teamsByName = {} }) {
                 style={{ opacity: wouldExceed && !isSelected ? 0.45 : 1, cursor: submitted ? 'default' : 'pointer' }}
               >
                 <div className="knockout-team-flag">
-                  {teamsByName[teamName]?.['Flag URL']
-                    ? <img src={teamsByName[teamName]['Flag URL']} alt="" className="team-flag" style={{ width: '2em' }} />
-                    : '🏳'}
+                  <Flag value={teamsByName[teamName]?.['Flag Emoji']} style={{ width: '2em' }} />
                 </div>
                 <div className="knockout-team-name">{teamName}</div>
                 <div className="knockout-team-price">{price} coins</div>

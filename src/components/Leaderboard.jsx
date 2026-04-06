@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getLeaderboard, getPlayerPicks } from '../api.js';
+import Flag from './Flag.jsx';
 
 const RANK_EMOJI = { 1: '🥇', 2: '🥈', 3: '🥉' };
 const TIER_LABELS = { 1: 'Tier 1', 2: 'Tier 2', 3: 'Tier 3' };
@@ -14,9 +15,7 @@ function TeamPickCard({ alloc, groupPrefs, teamsByName }) {
   return (
     <div className={`team-pick-card tier-${tier}`}>
       <div className="team-pick-name">
-        {teamsByName?.[teamName]?.['Flag URL'] && (
-          <img src={teamsByName[teamName]['Flag URL']} alt="" className="team-flag" />
-        )}
+        <Flag value={teamsByName?.[teamName]?.['Flag Emoji']} />
         {teamName}
       </div>
       <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', marginBottom: '0.3rem' }}>
@@ -102,9 +101,7 @@ function ExpandedPicks({ playerName, teamsByName }) {
           <div className="ko-picks-grid">
             {knockoutPreferences.map(row => (
               <span key={row['Team Purchased']} className="ko-pick-chip">
-                {teamsByName?.[row['Team Purchased']]?.['Flag URL'] && (
-                  <img src={teamsByName[row['Team Purchased']]['Flag URL']} alt="" className="team-flag" />
-                )}
+                <Flag value={teamsByName?.[row['Team Purchased']]?.['Flag Emoji']} />
                 {row['Team Purchased']}
                 <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
                   {row['Price Paid'] != null ? ` · ${row['Price Paid']}c` : ''}

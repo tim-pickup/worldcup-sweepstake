@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getAllocations, getSquads, submitGroupPreferences } from '../api.js';
+import Flag from './Flag.jsx';
 
 export default function GroupPreferences({ player, teamsByName = {} }) {
   const { pin, name } = player;
@@ -128,9 +129,7 @@ export default function GroupPreferences({ player, teamsByName = {} }) {
             <div className="team-section" key={team}>
               <div className="team-section-header">
                 <span className="team-section-name">
-                  {teamsByName[team]?.['Flag URL'] && (
-                    <img src={teamsByName[team]['Flag URL']} alt="" className="team-flag" />
-                  )}
+                  <Flag value={teamsByName[team]?.['Flag Emoji']} />
                   {team}
                 </span>
                 <span className={tierClass}>Tier {tier}</span>

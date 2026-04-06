@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getMatches } from '../api.js';
+import Flag from './Flag.jsx';
 
 export default function MatchResults({ teamsByName = {} }) {
   const [matches, setMatches] = useState([]);
@@ -59,18 +60,14 @@ export default function MatchResults({ teamsByName = {} }) {
               </div>
               <div className="match-card-teams">
                 <span className="match-card-team home">
-                  {teamsByName[m['Home Team']]?.['Flag URL'] && (
-                    <img src={teamsByName[m['Home Team']]['Flag URL']} alt="" className="team-flag" />
-                  )}
+                  <Flag value={teamsByName[m['Home Team']]?.['Flag Emoji']} />
                   {m['Home Team']}
                 </span>
                 <span className="match-card-score">
                   {hasScore ? `${homeScore} – ${awayScore}` : 'vs'}
                 </span>
                 <span className="match-card-team away">
-                  {teamsByName[m['Away Team']]?.['Flag URL'] && (
-                    <img src={teamsByName[m['Away Team']]['Flag URL']} alt="" className="team-flag" />
-                  )}
+                  <Flag value={teamsByName[m['Away Team']]?.['Flag Emoji']} />
                   {m['Away Team']}
                 </span>
               </div>

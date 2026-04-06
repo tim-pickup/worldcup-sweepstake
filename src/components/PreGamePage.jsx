@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { getPlayerNames } from '../api.js';
+import { useState, useEffect, useRef } from 'react';
+import { getPlayerNames, getTeams } from '../api.js';
 
 function useCountdown(target) {
   const [parts, setParts] = useState({ d: 0, h: 0, m: 0, s: 0, expired: false, loaded: false });
@@ -216,7 +216,6 @@ function PostDrawPrePicksView({ config, names, loadingNames }) {
 function PicksOpenView({ config, names, loadingNames, player, onLogin, onViewPicks }) {
   return (
     <div className="pregame-page">
-      {/* Hero — deadline front and centre */}
       <div className="pregame-hero pregame-hero-picks">
         <div className="pregame-hero-glow pregame-glow-picks" />
         <div className="pregame-hero-content">
@@ -234,17 +233,11 @@ function PicksOpenView({ config, names, loadingNames, player, onLogin, onViewPic
             Your teams have been drawn. Set a captain for each team and your Tier 2 mechanism before the deadline.
           </p>
 
-          {/* Big deadline countdown */}
           <div className="pregame-deadline-wrap">
             <div className="pregame-deadline-label">⏰ Deadline — picks close in</div>
-            <CountdownBlock
-              target={config?.groupPrefsClose}
-              accentClass="pregame-block-danger"
-              large
-            />
+            <CountdownBlock target={config?.groupPrefsClose} accentClass="pregame-block-danger" large />
           </div>
 
-          {/* CTA */}
           <div className="pregame-picks-cta-wrap">
             {player ? (
               <button className="pregame-picks-cta" onClick={onViewPicks}>
@@ -262,20 +255,135 @@ function PicksOpenView({ config, names, loadingNames, player, onLogin, onViewPic
         </div>
       </div>
 
-      {/* Tournament clock — secondary, below the fold */}
       <div className="pregame-tournament-section">
         <div className="pregame-section-inner pregame-tournament-inner">
-          <CountdownBlock
-            icon="🏆"
-            title="Tournament Kick Off"
-            subtitle="FIFA World Cup 2026 — USA · Canada · Mexico"
-            target={config?.groupScoringOpen}
-            accentClass="pregame-block-green"
-          />
+          <CountdownBlock icon="🏆" title="Tournament Kick Off" subtitle="FIFA World Cup 2026 — USA · Canada · Mexico" target={config?.groupScoringOpen} accentClass="pregame-block-green" />
         </div>
       </div>
 
       <PlayersSection names={names} loadingNames={loadingNames} />
+    </div>
+  );
+}
+
+/* ── State D: Tournament Countdown (picks closed, scoring not yet started) ──── */
+function TournamentUnit({ value, label }) {
+  return (
+    <div className="tc-unit">
+      <div className="tc-number">{String(value).padStart(2, '0')}</div>
+      <div className="tc-label">{label}</div>
+    </div>
+  );
+}
+
+function TournamentCountdownView({ config, names }) {
+  const [teams, setTeams] = useState([]);
+  const cd = useCountdown(config?.groupScoringOpen);
+
+  useEffect(() => {
+    getTeams().then(r => { if (r.ok) setTeams(r.data ?? []); });
+  }, []);
+
+  // Duplicate for seamless marquee loop
+  const marqueeTeams = teams.length > 0 ? [...teams, ...teams] : [];
+
+  return (
+    <div className="tc-page">
+      {/* Multi-colour background glows */}
+      <div className="tc-glow tc-glow-a" />
+      <div className="tc-glow tc-glow-b" />
+      <div className="tc-glow tc-glow-c" />
+
+      {/* Hero */}
+      <div className="tc-hero">
+        <div className="tc-eyebrow">
+          <span className="tc-eyebrow-star">★</span>
+          FIFA World Cup 2026
+          <span className="tc-eyebrow-star">★</span>
+        </div>
+
+        <h1 className="tc-headline">
+          The Tournament<br />
+          <span className="tc-headline-accent">Begins In</span>
+        </h1>
+
+        {/* Massive countdown */}
+        {cd.expired ? (
+          <div className="tc-kickoff">⚡ We're Live!</div>
+        ) : (
+          <div className="tc-countdown-row">
+            <TournamentUnit value={cd.d} label="Days" />
+            <div className="tc-sep">:</div>
+            <TournamentUnit value={cd.h} label="Hours" />
+            <div className="tc-sep">:</div>
+            <TournamentUnit value={cd.m} label="Minutes" />
+            <div className="tc-sep">:</div>
+            <TournamentUnit value={cd.s} label="Seconds" />
+          </div>
+        )}
+
+        {/* Picks locked pill */}
+        <div className="tc-locked-pill">
+          <span className="tc-locked-icon">🔒</span>
+          Picks locked in
+          {names.length > 0 && <> · <strong>{names.length}</strong> players ready</>}
+        </div>
+
+        {/* Host nations */}
+        <div className="tc-hosts">
+          <span className="tc-host">🇺🇸 USA</span>
+          <span className="tc-host-sep">·</span>
+          <span className="tc-host">🇨🇦 Canada</span>
+          <span className="tc-host-sep">·</span>
+          <span className="tc-host">🇲🇽 Mexico</span>
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className="tc-section-divider">
+        <div className="tc-divider-line" />
+        <div className="tc-divider-label">The Nations</div>
+        <div className="tc-divider-line" />
+      </div>
+
+      {/* Scrolling flags marquee */}
+      {marqueeTeams.length > 0 && (
+        <div className="tc-marquee-wrap">
+          <div className="tc-marquee-fade tc-fade-left" />
+          <div className="tc-marquee-fade tc-fade-right" />
+          <div className="tc-marquee-track">
+            {marqueeTeams.map((team, i) => (
+              <div key={`${team['Team Name']}-${i}`} className="tc-flag-chip">
+                <span className="tc-flag-emoji">{team['Flag Emoji'] || '🏳'}</span>
+                <span className="tc-flag-name">{team['Team Name']}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Second row scrolling the other way */}
+      {marqueeTeams.length > 0 && (
+        <div className="tc-marquee-wrap" style={{ marginTop: '0.75rem' }}>
+          <div className="tc-marquee-fade tc-fade-left" />
+          <div className="tc-marquee-fade tc-fade-right" />
+          <div className="tc-marquee-track tc-marquee-reverse">
+            {marqueeTeams.map((team, i) => (
+              <div key={`${team['Team Name']}-rev-${i}`} className="tc-flag-chip tc-flag-chip-alt">
+                <span className="tc-flag-emoji">{team['Flag Emoji'] || '🏳'}</span>
+                <span className="tc-flag-name">{team['Team Name']}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Bottom tagline */}
+      <div className="tc-tagline">
+        <span className="tc-tagline-accent">32 nations.</span>
+        &nbsp;64 matches.&nbsp;
+        <span className="tc-tagline-accent">One champion.</span>
+      </div>
     </div>
   );
 }
@@ -293,16 +401,25 @@ export default function PreGamePage({ config, player, onLogin, onViewPicks }) {
   }, []);
 
   const now = Date.now();
-  const drawDone   = config?.groupDrawDate  && now >= new Date(config.groupDrawDate).getTime();
-  const picksOpen  = config?.groupPrefsOpen && now >= new Date(config.groupPrefsOpen).getTime();
+  const drawDone    = config?.groupDrawDate   && now >= new Date(config.groupDrawDate).getTime();
+  const picksOpen   = config?.groupPrefsOpen  && now >= new Date(config.groupPrefsOpen).getTime();
+  const picksClosed = config?.groupPrefsClose && now >= new Date(config.groupPrefsClose).getTime();
 
+  // State D — picks closed, tournament not yet started
+  if (picksClosed) {
+    return <TournamentCountdownView config={config} names={names} />;
+  }
+
+  // State C — picks window is open
   if (picksOpen) {
     return <PicksOpenView config={config} names={names} loadingNames={loadingNames} player={player} onLogin={onLogin} onViewPicks={onViewPicks} />;
   }
 
+  // State B — draw done, picks not open yet
   if (drawDone) {
     return <PostDrawPrePicksView config={config} names={names} loadingNames={loadingNames} />;
   }
 
+  // State A — waiting for the draw
   return <PreDrawView config={config} names={names} loadingNames={loadingNames} />;
 }

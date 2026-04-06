@@ -187,15 +187,10 @@ export default function App() {
   const currentPhase = config?.currentPhase ?? null;
   const isRegistrationPhase = currentPhase === 'registration';
 
-  // Leaderboard is visible once scoring starts OR once the picks window has closed
-  // (so players can see the board while waiting for group stage to begin)
-  const groupPrefsCloseTime = config?.groupPrefsClose
-    ? new Date(config.groupPrefsClose).getTime()
-    : null;
-  const showLeaderboard = currentPhase !== null && (
-    SCORING_PHASES.has(currentPhase) ||
-    Boolean(groupPrefsCloseTime && Date.now() > groupPrefsCloseTime)
-  );
+  // Leaderboard only appears once scoring begins (group_scoring and beyond).
+  // The gap between GroupPrefsClose and GroupScoringOpen is handled by the
+  // TournamentCountdown state inside PreGamePage.
+  const showLeaderboard = currentPhase !== null && SCORING_PHASES.has(currentPhase);
   const isPreGamePhase = currentPhase !== null && !isRegistrationPhase && !showLeaderboard;
 
   // Redirect to the right home view when phase or leaderboard visibility changes

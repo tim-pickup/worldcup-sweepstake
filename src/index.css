@@ -1363,6 +1363,471 @@ select option {
   background: var(--surface);
 }
 
+/* ─── Nav Brand / Logo ───────────────────────────────────────────────────────── */
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.nav-wc-trophy {
+  width: 28px;
+  height: 34px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 1px 4px rgba(245, 158, 11, 0.45));
+}
+
+.nav-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.nav-brand-title {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.nav-brand-year {
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+
+.nav-brand-sep {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+  flex-shrink: 0;
+  margin: 0 0.2rem;
+}
+
+.nav-claude-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #e2836a;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+.nav-claude-icon {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+}
+
+/* ─── Pre-Game Page ──────────────────────────────────────────────────────────── */
+.pregame-page {
+  margin: -1.5rem -1rem 0;
+  overflow: hidden;
+}
+
+/* Hero */
+.pregame-hero {
+  position: relative;
+  padding: 5rem 2rem 4rem;
+  text-align: center;
+  overflow: hidden;
+}
+
+.pregame-hero-glow {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.pregame-glow-1 {
+  width: 600px;
+  height: 600px;
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, transparent 65%);
+}
+
+.pregame-glow-2 {
+  width: 400px;
+  height: 400px;
+  bottom: -150px;
+  right: -100px;
+  background: radial-gradient(circle, rgba(63, 185, 80, 0.08) 0%, transparent 65%);
+}
+
+.pregame-hero-content {
+  position: relative;
+  max-width: 640px;
+  margin: 0 auto;
+  animation: fade-up 0.7s ease both;
+}
+
+.pregame-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(248, 81, 73, 0.1);
+  border: 1px solid rgba(248, 81, 73, 0.3);
+  color: #f87171;
+  padding: 0.3rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+}
+
+.pregame-eyebrow-dot {
+  width: 7px;
+  height: 7px;
+  background: #f87171;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+.pregame-title {
+  font-size: clamp(2rem, 5.5vw, 3.2rem);
+  font-weight: 900;
+  line-height: 1.12;
+  color: var(--text-heading);
+  letter-spacing: -0.02em;
+  margin-bottom: 1rem;
+}
+
+.pregame-title-accent {
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 40%, #fff8e1 65%, var(--gold) 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer-text 4s ease infinite;
+}
+
+.pregame-subtitle {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+/* Countdowns section */
+.pregame-countdowns-section {
+  padding: 2.5rem 1.5rem 3rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.pregame-section-inner {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.pregame-countdowns-grid {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.pregame-countdown-block {
+  flex: 1;
+  padding: 2rem 1.5rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.pregame-countdown-block::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.pregame-block-gold::before { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
+.pregame-block-green::before { background: linear-gradient(90deg, var(--green), #22c55e); }
+
+.pregame-block-gold:hover {
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.08);
+}
+
+.pregame-block-green:hover {
+  border-color: rgba(63, 185, 80, 0.4);
+  box-shadow: 0 0 24px rgba(63, 185, 80, 0.08);
+}
+
+.pregame-countdown-block-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  line-height: 1;
+}
+
+.pregame-countdown-block-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+}
+
+.pregame-cd-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  margin-bottom: 1rem;
+}
+
+.pregame-cd-unit {
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.75rem;
+  min-width: 60px;
+  text-align: center;
+}
+
+.pregame-block-gold .pregame-cd-number { color: var(--gold); }
+.pregame-block-green .pregame-cd-number { color: var(--green); }
+
+.pregame-cd-number {
+  font-size: 1.8rem;
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.pregame-cd-label {
+  font-size: 0.55rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+.pregame-cd-sep {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: var(--border-bright);
+  line-height: 1;
+  margin-bottom: 1.1rem;
+}
+
+.pregame-cd-expired {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--green);
+  margin-bottom: 1rem;
+}
+
+.pregame-cd-tbd {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+
+.pregame-countdown-block-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.pregame-countdowns-divider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1rem;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.pregame-divider-line {
+  flex: 1;
+  width: 1px;
+  background: var(--border);
+  min-height: 30px;
+}
+
+.pregame-divider-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.2rem 0.5rem;
+}
+
+/* Players section */
+.pregame-players-section {
+  padding: 3rem 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.pregame-players-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.pregame-player-count {
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--gold);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.pregame-section-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text-heading);
+  letter-spacing: -0.01em;
+  margin-bottom: 0.3rem;
+}
+
+.pregame-section-sub {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.pregame-avatars-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+  gap: 0.7rem;
+}
+
+.pregame-player-pip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.pregame-pip-circle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: oklch(35% 0.08 calc(var(--avatar-hue, 32)));
+  border: 2px solid oklch(50% 0.12 calc(var(--avatar-hue, 32)));
+  color: oklch(88% 0.12 calc(var(--avatar-hue, 32)));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  transition: transform 0.15s;
+}
+
+.pregame-player-pip:hover .pregame-pip-circle {
+  transform: scale(1.1);
+}
+
+.pregame-pip-name {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 66px;
+  font-weight: 600;
+}
+
+/* What's Next / Timeline */
+.pregame-whats-next {
+  padding: 3rem 1.5rem 4rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.pregame-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.pregame-timeline-item {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+}
+
+.pregame-timeline-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 0;
+}
+
+.pregame-timeline-dot {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  border: 2px solid var(--step-accent, var(--gold));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--step-accent, var(--gold)) 25%, transparent);
+}
+
+.pregame-timeline-line {
+  width: 2px;
+  flex: 1;
+  min-height: 24px;
+  background: linear-gradient(to bottom, var(--border), transparent);
+  margin: 4px 0;
+}
+
+.pregame-timeline-content {
+  padding: 0.5rem 0 1.75rem;
+}
+
+.pregame-timeline-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.pregame-timeline-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+
 /* ─── Responsive ─────────────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
   .nav {
@@ -1372,7 +1837,9 @@ select option {
     padding-bottom: 0.5rem;
   }
 
-  .nav-title { font-size: 0.95rem; }
+  .nav-brand-title { display: none; }
+  .nav-brand-year  { font-size: 1rem; }
+  .nav-claude-badge span { display: none; }
   .nav-btn   { padding: 0.28rem 0.6rem; font-size: 0.78rem; }
 
   .card        { padding: 1rem; }
@@ -1391,4 +1858,16 @@ select option {
   .landing-section     { padding: 2.5rem 1rem; }
   .landing-hero        { padding: 3.5rem 1rem 3rem; }
   .landing-footer-cta  { padding: 3.5rem 1rem; }
+
+  .pregame-hero          { padding: 3.5rem 1rem 2.5rem; }
+  .pregame-title         { font-size: 1.9rem; }
+  .pregame-countdowns-grid { flex-direction: column; }
+  .pregame-countdowns-divider { flex-direction: row; padding: 0.75rem 0; }
+  .pregame-divider-line  { flex: 1; height: 1px; width: auto; min-height: 0; min-width: 30px; }
+  .pregame-cd-unit       { min-width: 50px; padding: 0.5rem 0.55rem; }
+  .pregame-cd-number     { font-size: 1.5rem; }
+  .pregame-cd-sep        { font-size: 1.3rem; }
+  .pregame-players-section { padding: 2rem 1rem; }
+  .pregame-whats-next    { padding: 2rem 1rem 3rem; }
+  .pregame-avatars-grid  { grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); }
 }

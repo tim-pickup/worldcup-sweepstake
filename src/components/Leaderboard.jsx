@@ -2,14 +2,48 @@ import { useState, useEffect, useCallback } from 'react';
 import { getLeaderboard, getPlayerPicks } from '../api.js';
 import Flag from './Flag.jsx';
 
-const RANK_EMOJI = { 1: '🥇', 2: '🥈', 3: '🥉' };
 const TIER_LABELS = { 1: 'Tier 1', 2: 'Tier 2', 3: 'Tier 3' };
 
+const PODIUM_CFG = {
+  1: { medal: '🥇', accent: '#ffd700', dimBg: 'rgba(255,215,0,0.06)',  border: 'rgba(255,215,0,0.3)'  },
+  2: { medal: '🥈', accent: '#b0b8c1', dimBg: 'rgba(176,184,193,0.06)', border: 'rgba(176,184,193,0.22)' },
+  3: { medal: '🥉', accent: '#cd7f32', dimBg: 'rgba(205,127,50,0.06)',  border: 'rgba(205,127,50,0.25)' },
+};
+
+/* ── Podium ──────────────────────────────────────────────────────────────────── */
+function PodiumCard({ row, position }) {
+  const { medal, accent, dimBg, border } = PODIUM_CFG[position];
+  const pts = row['Total Points'] ?? 0;
+  return (
+    <div
+      className={`podium-card podium-${position}`}
+      style={{ '--p-accent': accent, '--p-bg': dimBg, '--p-border': border }}
+    >
+      <div className="podium-medal">{medal}</div>
+      <div className="podium-name">{row['Player Name']}</div>
+      <div className="podium-pts">{pts}</div>
+      <div className="podium-pts-label">pts</div>
+    </div>
+  );
+}
+
+function Podium({ rows }) {
+  if (rows.length === 0) return null;
+  return (
+    <div className="leaderboard-podium">
+      {rows[1] ? <PodiumCard row={rows[1]} position={2} /> : <div />}
+      <PodiumCard row={rows[0]} position={1} />
+      {rows[2] ? <PodiumCard row={rows[2]} position={3} /> : <div />}
+    </div>
+  );
+}
+
+/* ── Expanded picks ──────────────────────────────────────────────────────────── */
 function TeamPickCard({ alloc, groupPrefs, teamsByName }) {
-  const tier = alloc['Tier'] ?? alloc['tier'];
-  const teamName = alloc['Team Name'];
-  const pref = groupPrefs?.find(p => p['Team Name'] === teamName);
-  const captain = pref?.['Captain Name'];
+  const tier      = alloc['Tier'] ?? alloc['tier'];
+  const teamName  = alloc['Team Name'];
+  const pref      = groupPrefs?.find(p => p['Team Name'] === teamName);
+  const captain   = pref?.['Captain Name'];
   const mechanism = pref?.['Tier 2 Mechanism'];
 
   return (
@@ -35,9 +69,9 @@ function TeamPickCard({ alloc, groupPrefs, teamsByName }) {
 }
 
 function ExpandedPicks({ playerName, teamsByName }) {
-  const [picks, setPicks] = useState(null);
+  const [picks, setPicks]   = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError]   = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -45,11 +79,8 @@ function ExpandedPicks({ playerName, teamsByName }) {
     setError('');
     getPlayerPicks(playerName).then(result => {
       if (cancelled) return;
-      if (result.ok) {
-        setPicks(result.data);
-      } else {
-        setError(result.error ?? 'Could not load picks.');
-      }
+      if (result.ok) setPicks(result.data);
+      else setError(result.error ?? 'Could not load picks.');
       setLoading(false);
     });
     return () => { cancelled = true; };
@@ -67,8 +98,7 @@ function ExpandedPicks({ playerName, teamsByName }) {
     return <div style={{ color: 'var(--text-muted)', fontSize: '0.82rem', fontStyle: 'italic' }}>No picks submitted yet.</div>;
   }
 
-  // Unique captain for knockout
-  const koCapt = knockoutPreferences[0]?.['Captain Name'];
+  const koCapt  = knockoutPreferences[0]?.['Captain Name'];
   const koTotal = knockoutPreferences[0]?.['Total Spend'];
 
   return (
@@ -91,7 +121,6 @@ function ExpandedPicks({ playerName, teamsByName }) {
           </div>
         </div>
       )}
-
       {hasKnockout && (
         <div>
           <div className="picks-section-label">
@@ -115,19 +144,19 @@ function ExpandedPicks({ playerName, teamsByName }) {
   );
 }
 
+/* ── Main component ──────────────────────────────────────────────────────────── */
 export default function Leaderboard({ onRowsChange, teamsByName = {} }) {
-  const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [expanded, setExpanded] = useState(null); // player name string | null
+  const [rows,     setRows]     = useState([]);
+  const [loading,  setLoading]  = useState(true);
+  const [error,    setError]    = useState('');
+  const [expanded, setExpanded] = useState(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError('');
     const result = await getLeaderboard();
     if (result.ok) {
-      const data = result.data ?? [];
-      const sorted = [...data].sort((a, b) => (a['Rank'] ?? Infinity) - (b['Rank'] ?? Infinity));
+      const sorted = [...(result.data ?? [])].sort((a, b) => (a['Rank'] ?? Infinity) - (b['Rank'] ?? Infinity));
       setRows(sorted);
       onRowsChange?.(sorted);
     } else {
@@ -142,10 +171,19 @@ export default function Leaderboard({ onRowsChange, teamsByName = {} }) {
     setExpanded(prev => prev === name ? null : name);
   }
 
-  const COL_COUNT = 8;
+  const topPts    = rows[0]?.['Total Points'] ?? 1;
+  const COL_COUNT = 7;
+
+  const RANK_DISPLAY = (rank) => {
+    if (rank === 1) return <span className="lr-medal" style={{ color: '#ffd700' }}>🥇</span>;
+    if (rank === 2) return <span className="lr-medal" style={{ color: '#b0b8c1' }}>🥈</span>;
+    if (rank === 3) return <span className="lr-medal" style={{ color: '#cd7f32' }}>🥉</span>;
+    return <span className="lr-rank-num">{rank}</span>;
+  };
 
   return (
     <div className="card leaderboard">
+      {/* Header row */}
       <div className="leaderboard-header">
         <h2 className="card-title" style={{ marginBottom: 0, borderBottom: 'none', paddingBottom: 0 }}>
           🏆 Leaderboard
@@ -158,62 +196,78 @@ export default function Leaderboard({ onRowsChange, teamsByName = {} }) {
       {error   && <div className="error">{error}</div>}
       {loading && !error && <div className="loading">Loading leaderboard…</div>}
       {!loading && !error && rows.length === 0 && (
-        <div className="empty-state">No scores yet — check back soon!</div>
+        <div className="empty-state">No scores yet — check back once the group stage begins!</div>
       )}
 
       {!loading && rows.length > 0 && (
-        <div className="leaderboard-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Player</th>
-                <th>Total</th>
-                <th>Goals</th>
-                <th>Captain</th>
-                <th>Own Goals</th>
-                <th>Cards</th>
-                <th style={{ width: 28 }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, i) => {
-                const name   = row['Player Name'];
-                const rank   = row['Rank'] ?? i + 1;
-                const isOpen = expanded === name;
+        <>
+          {/* Podium for top 3 */}
+          <Podium rows={rows} />
 
-                return [
-                  <tr
-                    key={`row-${name}`}
-                    className={`player-row${isOpen ? ' expanded' : ''}`}
-                    onClick={() => toggleExpand(name)}
-                  >
-                    <td className="leaderboard-rank">
-                      {RANK_EMOJI[rank] ?? rank}
-                    </td>
-                    <td style={{ fontWeight: 600, color: 'var(--text-heading)' }}>{name}</td>
-                    <td className="leaderboard-points">{row['Total Points'] ?? 0}</td>
-                    <td>{row['Goal Points'] ?? 0}</td>
-                    <td>{row['Captain Points'] ?? 0}</td>
-                    <td>{row['Own Goal Points'] ?? 0}</td>
-                    <td>{row['Card Points'] ?? 0}</td>
-                    <td style={{ textAlign: 'center' }}>
-                      <span className={`leaderboard-chevron${isOpen ? ' open' : ''}`}>▼</span>
-                    </td>
-                  </tr>,
+          {/* Full table */}
+          <div className="leaderboard-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th className="col-rank">#</th>
+                  <th>Player</th>
+                  <th className="col-pts">Pts</th>
+                  <th className="col-sub">Goals</th>
+                  <th className="col-sub">Capt</th>
+                  <th className="col-sub">OG</th>
+                  <th className="col-sub">Cards</th>
+                  <th style={{ width: 24 }} />
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, i) => {
+                  const name   = row['Player Name'];
+                  const rank   = row['Rank'] ?? i + 1;
+                  const pts    = row['Total Points'] ?? 0;
+                  const isOpen = expanded === name;
+                  const barPct = topPts > 0 ? Math.round((pts / topPts) * 100) : 0;
 
-                  isOpen && (
-                    <tr key={`picks-${name}`} className="picks-row">
-                      <td colSpan={COL_COUNT}>
-                        <ExpandedPicks playerName={name} teamsByName={teamsByName} />
+                  return [
+                    <tr
+                      key={`row-${name}`}
+                      className={`player-row${isOpen ? ' expanded' : ''}${rank <= 3 ? ` top-${rank}` : ''}`}
+                      onClick={() => toggleExpand(name)}
+                    >
+                      <td className="col-rank">{RANK_DISPLAY(rank)}</td>
+                      <td className="col-player">
+                        <div className="player-name-wrap">
+                          <span className="player-name">{name}</span>
+                          <div
+                            className="player-pts-bar"
+                            style={{ width: `${barPct}%`, '--bar-color': rank === 1 ? 'var(--gold)' : 'var(--border-bright)' }}
+                          />
+                        </div>
                       </td>
-                    </tr>
-                  ),
-                ];
-              })}
-            </tbody>
-          </table>
-        </div>
+                      <td className="col-pts">
+                        <span className={`pts-badge${rank === 1 ? ' pts-badge-gold' : ''}`}>{pts}</span>
+                      </td>
+                      <td className="col-sub">{row['Goal Points']    ?? 0}</td>
+                      <td className="col-sub">{row['Captain Points'] ?? 0}</td>
+                      <td className="col-sub">{row['Own Goal Points'] ?? 0}</td>
+                      <td className="col-sub">{row['Card Points']    ?? 0}</td>
+                      <td style={{ textAlign: 'center' }}>
+                        <span className={`leaderboard-chevron${isOpen ? ' open' : ''}`}>▼</span>
+                      </td>
+                    </tr>,
+
+                    isOpen && (
+                      <tr key={`picks-${name}`} className="picks-row">
+                        <td colSpan={COL_COUNT + 1}>
+                          <ExpandedPicks playerName={name} teamsByName={teamsByName} />
+                        </td>
+                      </tr>
+                    ),
+                  ];
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

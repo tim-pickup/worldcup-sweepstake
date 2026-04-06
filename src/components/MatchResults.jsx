@@ -50,6 +50,9 @@ export default function MatchResults({ teamsByName = {} }) {
               })
             : '—';
 
+          const homeWon = hasScore && Number(homeScore) > Number(awayScore);
+          const awayWon = hasScore && Number(awayScore) > Number(homeScore);
+
           return (
             <div className="match-card" key={matchId}>
               <div className="match-card-header">
@@ -57,21 +60,21 @@ export default function MatchResults({ teamsByName = {} }) {
                 {m['Group'] && (
                   <span className="badge badge-tier-2">Group {m['Group']}</span>
                 )}
+                <span className="match-card-date">{dateStr}</span>
               </div>
               <div className="match-card-teams">
-                <span className="match-card-team home">
+                <span className={`match-card-team home${homeWon ? ' winner' : ''}`}>
                   <Flag value={teamsByName[m['Home Team']]?.['Flag Emoji']} />
                   {m['Home Team']}
                 </span>
-                <span className="match-card-score">
+                <span className={`match-card-score${hasScore ? ' has-score' : ''}`}>
                   {hasScore ? `${homeScore} – ${awayScore}` : 'vs'}
                 </span>
-                <span className="match-card-team away">
+                <span className={`match-card-team away${awayWon ? ' winner' : ''}`}>
                   <Flag value={teamsByName[m['Away Team']]?.['Flag Emoji']} />
                   {m['Away Team']}
                 </span>
               </div>
-              <div className="match-card-date">{dateStr}</div>
             </div>
           );
         })}

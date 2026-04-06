@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getConfig, getTeams } from './api.js';
-import PhaseBanner from './components/PhaseBanner.jsx';
+import TournamentHeader from './components/TournamentHeader.jsx';
 import Leaderboard from './components/Leaderboard.jsx';
 import MatchResults from './components/MatchResults.jsx';
 import RegistrationForm from './components/RegistrationForm.jsx';
@@ -39,13 +39,13 @@ function savePlayerToSession(player) {
 }
 
 const PHASE_LABELS = {
-  registration:           'Phase 1 — Registration',
-  group_preferences:      'Phase 2 — Group Preferences',
-  group_scoring:          'Phase 3 — Group Stage Live',
-  knockout_preferences:   'Phase 4 — Knockout Auction',
-  knockout_scoring:       'Phase 5 — Knockout Stage Live',
-  complete:               'Phase 6 — Complete',
-  between_phases:         'Preparing…',
+  registration:         'Registration Open',
+  group_preferences:    'Group Stage Picks',
+  group_scoring:        'Group Stage',
+  knockout_preferences: 'Knockout Auction',
+  knockout_scoring:     'Knockout Stage',
+  complete:             'Tournament Complete',
+  between_phases:       'Preparing…',
 };
 
 // Phases where the leaderboard is meaningful (scoring has started)
@@ -75,66 +75,6 @@ function ClaudeBadge() {
   );
 }
 
-function StatsBar({ config, leaderRows }) {
-  const phase = config?.currentPhase ?? 'between_phases';
-  const leader = leaderRows?.[0]?.['Player Name'] ?? '—';
-  const playerCount = leaderRows?.length ?? '—';
-  const phaseLabel = PHASE_LABELS[phase] ?? '—';
-
-  // Countdown to next deadline
-  const [countdown, setCountdown] = useState('');
-  useEffect(() => {
-    const deadlineKey = {
-      registration:         'registrationClose',
-      group_preferences:    'groupPrefsClose',
-      group_scoring:        'groupScoringClose',
-      knockout_preferences: 'knockoutPrefsClose',
-      knockout_scoring:     'knockoutScoringClose',
-    }[phase];
-
-    if (!config || !deadlineKey || !config[deadlineKey]) {
-      setCountdown('—');
-      return;
-    }
-    const deadline = new Date(config[deadlineKey]);
-    function update() {
-      const diff = deadline - new Date();
-      if (diff <= 0) { setCountdown('Closed'); return; }
-      const d = Math.floor(diff / 86400000);
-      const h = Math.floor((diff % 86400000) / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      setCountdown(d > 0 ? `${d}d ${h}h ${m}m` : `${h}h ${m}m`);
-    }
-    update();
-    const t = setInterval(update, 60_000);
-    return () => clearInterval(t);
-  }, [config, phase]);
-
-  return (
-    <div className="stats-bar">
-      <div className="stat-chip">
-        <div className="stat-chip-label">Phase</div>
-        <div className="stat-chip-value" style={{ fontSize: '0.78rem', color: 'var(--text)' }}>
-          {phaseLabel}
-        </div>
-      </div>
-      <div className="stat-chip">
-        <div className="stat-chip-label">Players</div>
-        <div className="stat-chip-value">{playerCount}</div>
-      </div>
-      <div className="stat-chip">
-        <div className="stat-chip-label">Leader</div>
-        <div className="stat-chip-value" style={{ fontSize: '0.9rem', color: 'var(--text-heading)' }}>
-          {leader}
-        </div>
-      </div>
-      <div className="stat-chip">
-        <div className="stat-chip-label">Closes In</div>
-        <div className="stat-chip-value">{countdown}</div>
-      </div>
-    </div>
-  );
-}
 
 export default function App() {
   const [config, setConfig] = useState(null);
@@ -300,8 +240,7 @@ export default function App() {
       <main className="app-main">
         {view === 'leaderboard' && showLeaderboard && (
           <>
-            <PhaseBanner config={config} />
-            <StatsBar config={config} leaderRows={leaderRows} />
+            <TournamentHeader config={config} leaderRows={leaderRows} />
             <Leaderboard onRowsChange={setLeaderRows} teamsByName={teamsByName} />
             <MatchResults teamsByName={teamsByName} />
           </>

@@ -138,8 +138,18 @@ export default function App() {
   const isPreGamePhase = currentPhase !== null && !isRegistrationPhase && !showLeaderboard;
 
   // Sub-phase flags for the knockout era
-  const isKnockoutPrefs   = currentPhase === 'knockout_preferences';
-  const isComplete        = currentPhase === 'complete';
+  const isKnockoutPrefs = currentPhase === 'knockout_preferences';
+  const isComplete      = currentPhase === 'complete';
+
+  // Group scoring phase but the group stage has already ended — show the
+  // pre-auction landing page (countdown to knockoutPrefsOpen) instead of
+  // the plain leaderboard.
+  const groupScoringClosed =
+    currentPhase === 'group_scoring' &&
+    config?.groupScoringClose &&
+    Date.now() >= new Date(config.groupScoringClose).getTime();
+
+  const showKnockoutPage = isKnockoutPrefs || !!groupScoringClosed;
 
   // Redirect to the right home view when phase or leaderboard visibility changes
   useEffect(() => {
@@ -250,7 +260,7 @@ export default function App() {
           <>
             {isComplete ? (
               <TournamentCompletePage teamsByName={teamsByName} />
-            ) : isKnockoutPrefs ? (
+            ) : showKnockoutPage ? (
               <KnockoutPage
                 config={config}
                 player={player}

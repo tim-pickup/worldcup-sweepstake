@@ -289,6 +289,11 @@ function TournamentCountdownView({ config, names }) {
 
   return (
     <div className="tc-page">
+      {/* Festival atmosphere layers */}
+      <div className="tc-stars" />
+      <div className="tc-beam tc-beam-1" />
+      <div className="tc-beam tc-beam-2" />
+      <div className="tc-beam tc-beam-3" />
       {/* Multi-colour background glows */}
       <div className="tc-glow tc-glow-a" />
       <div className="tc-glow tc-glow-b" />
@@ -331,11 +336,20 @@ function TournamentCountdownView({ config, names }) {
 
         {/* Host nations */}
         <div className="tc-hosts">
-          <span className="tc-host">🇺🇸 USA</span>
+          <span className="tc-host">
+            <img src="https://flagcdn.com/w40/us.png" alt="USA" className="tc-host-flag" />
+            USA
+          </span>
           <span className="tc-host-sep">·</span>
-          <span className="tc-host">🇨🇦 Canada</span>
+          <span className="tc-host">
+            <img src="https://flagcdn.com/w40/ca.png" alt="Canada" className="tc-host-flag" />
+            Canada
+          </span>
           <span className="tc-host-sep">·</span>
-          <span className="tc-host">🇲🇽 Mexico</span>
+          <span className="tc-host">
+            <img src="https://flagcdn.com/w40/mx.png" alt="Mexico" className="tc-host-flag" />
+            Mexico
+          </span>
         </div>
       </div>
 
@@ -354,7 +368,9 @@ function TournamentCountdownView({ config, names }) {
           <div className="tc-marquee-track">
             {marqueeTeams.map((team, i) => (
               <div key={`${team['Team Name']}-${i}`} className="tc-flag-chip">
-                <span className="tc-flag-emoji">{team['Flag Emoji'] || '🏳'}</span>
+                {team['Flag Emoji']?.startsWith('http')
+                  ? <img src={team['Flag Emoji']} alt="" className="tc-flag-img" />
+                  : <span className="tc-flag-emoji">{team['Flag Emoji'] || '🏳'}</span>}
                 <span className="tc-flag-name">{team['Team Name']}</span>
               </div>
             ))}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { getPlayerNames, getTeams } from '../api.js';
+import { getPlayerNames, getTeams, getAllAllocations } from '../api.js';
 
 function useCountdown(target) {
   const [parts, setParts] = useState({ d: 0, h: 0, m: 0, s: 0, expired: false, loaded: false });
@@ -172,6 +172,114 @@ function PreDrawView({ config, names, loadingNames }) {
   );
 }
 
+/* ── Draw Allocations Table ─────────────────────────────────────────────────── */
+function DrawAllocationsTable() {
+  const [allocs, setAllocs]       = useState(null); // null = loading
+  const [teamsByName, setTeams]   = useState({});
+
+  useEffect(() => {
+    Promise.all([getAllAllocations(), getTeams()]).then(([ar, tr]) => {
+      if (ar.ok) setAllocs(ar.data ?? []);
+      else       setAllocs([]);
+      if (tr.ok) {
+        const map = {};
+        for (const t of tr.data ?? []) map[t['Team Name']] = t;
+        setTeams(map);
+      }
+    });
+  }, []);
+
+  if (allocs === null) {
+    return (
+      <div className="draw-section">
+        <div className="pregame-section-inner">
+          <div className="draw-loading">Loading draw results…</div>
+        </div>
+      </div>
+    );
+  }
+  if (allocs.length === 0) return null;
+
+  // Group rows: playerName → { 1: teamName, 2: teamName, 3: teamName }
+  const playerMap = {};
+  for (const row of allocs) {
+    const name = row['Player Name'];
+    const tier = Number(row['Tier']);
+    if (!playerMap[name]) playerMap[name] = {};
+    playerMap[name][tier] = row['Team Name'];
+  }
+  const players = Object.keys(playerMap).sort((a, b) =>
+    a.toLowerCase().localeCompare(b.toLowerCase())
+  );
+
+  return (
+    <div className="draw-section">
+      <div className="pregame-section-inner">
+        <div className="draw-card">
+          <div className="draw-card-header">
+            <div>
+              <h2 className="draw-card-title">🎲 Draw Results</h2>
+              <p className="draw-card-sub">
+                {players.length} player{players.length !== 1 ? 's' : ''} · 3 teams each
+              </p>
+            </div>
+          </div>
+
+          <div className="draw-table-wrap">
+            <table className="draw-table">
+              <thead>
+                <tr>
+                  <th className="draw-col-player">Player</th>
+                  <th className="draw-col-tier">
+                    <span className="draw-tier-badge draw-tier-1">🥇 Tier 1</span>
+                  </th>
+                  <th className="draw-col-tier">
+                    <span className="draw-tier-badge draw-tier-2">🥈 Tier 2</span>
+                  </th>
+                  <th className="draw-col-tier">
+                    <span className="draw-tier-badge draw-tier-3">🥉 Tier 3</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {players.map((name) => {
+                  const p = playerMap[name];
+                  return (
+                    <tr key={name} className="draw-row">
+                      <td className="draw-cell-player">
+                        <span className="draw-player-name">{name}</span>
+                      </td>
+                      {[1, 2, 3].map(tier => {
+                        const teamName = p[tier];
+                        const td = teamsByName[teamName];
+                        const flag = td?.['Flag Emoji'];
+                        return (
+                          <td key={tier} className={`draw-cell-team draw-cell-t${tier}`}>
+                            {teamName ? (
+                              <div className="draw-team-chip">
+                                {flag?.startsWith('http')
+                                  ? <img src={flag} alt="" className="draw-flag-img" />
+                                  : <span className="draw-flag-emoji">{flag || '🏳'}</span>}
+                                <span className="draw-team-name">{teamName}</span>
+                              </div>
+                            ) : (
+                              <span className="draw-tbd">—</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── State B: Post-Draw, Picks Not Yet Open ─────────────────────────────────── */
 function PostDrawPrePicksView({ config, names, loadingNames }) {
   return (
@@ -207,6 +315,7 @@ function PostDrawPrePicksView({ config, names, loadingNames }) {
         </div>
       </div>
 
+      <DrawAllocationsTable />
       <PlayersSection names={names} loadingNames={loadingNames} />
     </div>
   );

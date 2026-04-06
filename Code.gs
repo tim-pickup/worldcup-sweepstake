@@ -281,6 +281,15 @@ function handleGetMatches() {
 }
 
 /**
+ * Returns all rows from the Allocations sheet.
+ * Public — no auth required. Used for the post-draw allocations table.
+ * Allocations columns: Player ID | Player Name | Team Name | Tier
+ */
+function handleGetAllAllocations() {
+  return ok(sheetToObjects(getSheet('Allocations')));
+}
+
+/**
  * Returns an alphabetically-sorted list of registered player names.
  * Public — no PIN required. Used to populate the login name picker.
  */
@@ -713,6 +722,7 @@ function doGet(e) {
       case 'getSquads':        return handleGetSquads();
       case 'getMatches':       return handleGetMatches();
       case 'getPlayerNames':   return handleGetPlayerNames();
+      case 'getAllAllocations': return handleGetAllAllocations();
       case 'getPlayerPicks':   return handleGetPlayerPicks(e.parameter.playerName || '');
       case 'getAllocations':   return handleGetAllocations(e.parameter.name || '', pin);
       case 'getKnockoutTeams': return handleGetKnockoutTeams(pin);

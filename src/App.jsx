@@ -53,46 +53,24 @@ const SCORING_PHASES = new Set(['group_scoring', 'knockout_preferences', 'knocko
 
 function WC2026Logo() {
   return (
-    <svg
-      className="nav-wc-trophy"
-      viewBox="0 0 32 38"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-label="World Cup 2026 Trophy"
-    >
-      <defs>
-        <linearGradient id="trophy-grad" x1="0" y1="0" x2="32" y2="38" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#fbbf24" />
-          <stop offset="55%" stopColor="#f59e0b" />
-          <stop offset="100%" stopColor="#d97706" />
-        </linearGradient>
-      </defs>
-      {/* Cup body */}
-      <path d="M7 3h18v13a9 9 0 01-18 0V3z" fill="url(#trophy-grad)" />
-      {/* Left handle */}
-      <path d="M7 6.5H4A3.5 3.5 0 004 13h3" stroke="url(#trophy-grad)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
-      {/* Right handle */}
-      <path d="M25 6.5h3A3.5 3.5 0 0128 13h-3" stroke="url(#trophy-grad)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
-      {/* Stars — three host nations */}
-      <text x="16" y="13" textAnchor="middle" fontSize="5.5" fill="rgba(255,255,255,0.88)" letterSpacing="1.5">★★★</text>
-      {/* Stem */}
-      <rect x="14" y="16" width="4" height="8" rx="1" fill="url(#trophy-grad)" />
-      {/* Base */}
-      <rect x="8.5" y="24" width="15" height="4" rx="2" fill="url(#trophy-grad)" />
-      {/* Base shadow line */}
-      <rect x="10" y="27.5" width="12" height="0.75" rx="0.375" fill="rgba(0,0,0,0.25)" />
-    </svg>
+    <img
+      src="https://digitalhub.fifa.com/transform/157d23bf-7e13-4d7b-949e-5d27d340987e/WC26_Logo?&io=transform:fill,height:80&quality=90"
+      alt="FIFA World Cup 2026"
+      className="nav-wc-logo-img"
+    />
   );
 }
 
 function ClaudeBadge() {
   return (
     <div className="nav-claude-badge">
-      {/* Anthropic-style sparkle/diamond icon */}
       <svg className="nav-claude-icon" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
         <path d="M8 1.5L9.6 6.4L14.5 8L9.6 9.6L8 14.5L6.4 9.6L1.5 8L6.4 6.4L8 1.5Z" />
       </svg>
-      <span>Powered by Claude</span>
+      <div className="nav-claude-badge-text">
+        <div className="nav-claude-powered">Powered by</div>
+        <div className="nav-claude-name">Claude</div>
+      </div>
     </div>
   );
 }
@@ -247,10 +225,6 @@ export default function App() {
       <nav className="nav">
         <div className="nav-brand">
           <WC2026Logo />
-          <div className="nav-brand-text">
-            <div className="nav-brand-title">World Cup</div>
-            <div className="nav-brand-year">2026</div>
-          </div>
           <div className="nav-brand-sep" />
           <ClaudeBadge />
         </div>

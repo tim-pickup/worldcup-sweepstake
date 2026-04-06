@@ -1493,6 +1493,22 @@ select option {
   animation: pulse-ring 2s ease-out infinite;
 }
 
+/* Amber (draw complete) eyebrow */
+.pregame-eyebrow-amber {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: var(--gold);
+}
+.pregame-eyebrow-dot-amber { background: var(--gold); }
+
+/* Danger (picks open) eyebrow */
+.pregame-eyebrow-danger {
+  background: var(--danger-dim);
+  border-color: rgba(248, 81, 73, 0.35);
+  color: var(--danger);
+}
+.pregame-eyebrow-dot-danger { background: var(--danger); }
+
 .pregame-title {
   font-size: clamp(2rem, 5.5vw, 3.2rem);
   font-weight: 900;
@@ -1509,6 +1525,109 @@ select option {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   animation: shimmer-text 4s ease infinite;
+}
+
+/* Danger (red) title accent for picks-open hero */
+.pregame-title-accent-danger {
+  background: linear-gradient(135deg, var(--danger) 0%, #fb7185 50%, var(--danger) 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer-text 3s ease infinite;
+}
+
+/* Picks-open hero: shift glow to red */
+.pregame-hero-picks { background: var(--bg); }
+.pregame-glow-picks {
+  position: absolute;
+  width: 700px;
+  height: 700px;
+  top: -250px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(circle, rgba(248, 81, 73, 0.1) 0%, transparent 65%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Deadline countdown wrapper */
+.pregame-deadline-wrap {
+  margin: 2rem auto 0;
+  display: inline-block;
+  text-align: center;
+}
+
+.pregame-deadline-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--danger);
+  margin-bottom: 0.75rem;
+  opacity: 0.85;
+}
+
+/* CTA for picks */
+.pregame-picks-cta-wrap {
+  margin-top: 2.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.pregame-picks-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, var(--danger) 0%, #e0443e 100%);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.95rem 2.25rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 20px rgba(248, 81, 73, 0.4);
+  letter-spacing: 0.01em;
+}
+
+.pregame-picks-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(248, 81, 73, 0.55);
+}
+
+.pregame-picks-cta:active { transform: translateY(0); }
+
+.pregame-cta-arrow {
+  font-size: 1.1rem;
+  transition: transform 0.15s;
+}
+.pregame-picks-cta:hover .pregame-cta-arrow { transform: translateX(4px); }
+
+.pregame-picks-cta-note {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* Tournament clock section (below picks hero) */
+.pregame-tournament-section {
+  padding: 2.5rem 1.5rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.pregame-tournament-inner {
+  display: flex;
+  justify-content: center;
+}
+
+.pregame-tournament-inner .pregame-countdown-block {
+  max-width: 420px;
+  width: 100%;
 }
 
 .pregame-subtitle {
@@ -1555,8 +1674,9 @@ select option {
   border-radius: var(--radius) var(--radius) 0 0;
 }
 
-.pregame-block-gold::before { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
-.pregame-block-green::before { background: linear-gradient(90deg, var(--green), #22c55e); }
+.pregame-block-gold::before   { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
+.pregame-block-green::before  { background: linear-gradient(90deg, var(--green), #22c55e); }
+.pregame-block-danger::before { background: linear-gradient(90deg, var(--danger), #fb7185); }
 
 .pregame-block-gold:hover {
   border-color: rgba(245, 158, 11, 0.4);
@@ -1600,8 +1720,37 @@ select option {
   text-align: center;
 }
 
-.pregame-block-gold .pregame-cd-number { color: var(--gold); }
-.pregame-block-green .pregame-cd-number { color: var(--green); }
+.pregame-block-gold .pregame-cd-number   { color: var(--gold); }
+.pregame-block-green .pregame-cd-number  { color: var(--green); }
+.pregame-block-danger .pregame-cd-number { color: var(--danger); }
+
+.pregame-block-danger:hover {
+  border-color: rgba(248, 81, 73, 0.4);
+  box-shadow: 0 0 32px rgba(248, 81, 73, 0.12);
+}
+
+/* Large countdown variant (picks deadline hero) */
+.pregame-countdown-block-lg {
+  padding: 2.5rem 2rem;
+}
+
+.pregame-cd-unit-lg {
+  min-width: 80px;
+  padding: 0.85rem 1rem;
+}
+
+.pregame-cd-unit-lg .pregame-cd-number {
+  font-size: 2.8rem;
+}
+
+.pregame-cd-unit-lg .pregame-cd-label {
+  font-size: 0.62rem;
+}
+
+.pregame-countdown-block-lg .pregame-cd-sep {
+  font-size: 2.2rem;
+  margin-bottom: 1.4rem;
+}
 
 .pregame-cd-number {
   font-size: 1.8rem;
@@ -1856,6 +2005,9 @@ select option {
   .pregame-hero          { padding: 3.5rem 1rem 2.5rem; }
   .pregame-title         { font-size: 1.9rem; }
   .pregame-countdowns-grid { flex-direction: column; }
+  .pregame-cd-unit-lg    { min-width: 62px; padding: 0.65rem 0.75rem; }
+  .pregame-cd-unit-lg .pregame-cd-number { font-size: 2rem; }
+  .pregame-countdown-block-lg .pregame-cd-sep { font-size: 1.7rem; }
   .pregame-countdowns-divider { flex-direction: row; padding: 0.75rem 0; }
   .pregame-divider-line  { flex: 1; height: 1px; width: auto; min-height: 0; min-width: 30px; }
   .pregame-cd-unit       { min-width: 50px; padding: 0.5rem 0.55rem; }

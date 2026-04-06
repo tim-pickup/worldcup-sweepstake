@@ -186,18 +186,29 @@ export default function App() {
 
   const currentPhase = config?.currentPhase ?? null;
   const isRegistrationPhase = currentPhase === 'registration';
-  const isPreGamePhase = currentPhase !== null && !isRegistrationPhase && !SCORING_PHASES.has(currentPhase);
-  const showLeaderboard = currentPhase !== null && SCORING_PHASES.has(currentPhase);
 
-  // Redirect to the right home view when the phase loads or changes
+  // Leaderboard is visible once scoring starts OR once the picks window has closed
+  // (so players can see the board while waiting for group stage to begin)
+  const groupPrefsCloseTime = config?.groupPrefsClose
+    ? new Date(config.groupPrefsClose).getTime()
+    : null;
+  const showLeaderboard = currentPhase !== null && (
+    SCORING_PHASES.has(currentPhase) ||
+    Boolean(groupPrefsCloseTime && Date.now() > groupPrefsCloseTime)
+  );
+  const isPreGamePhase = currentPhase !== null && !isRegistrationPhase && !showLeaderboard;
+
+  // Redirect to the right home view when phase or leaderboard visibility changes
   useEffect(() => {
     if (!currentPhase) return;
     if (isRegistrationPhase && view === 'leaderboard') {
       setView('landing');
     } else if (isPreGamePhase && view === 'leaderboard') {
       setView('pregame');
+    } else if (showLeaderboard && view === 'pregame') {
+      setView('leaderboard');
     }
-  }, [currentPhase]);
+  }, [currentPhase, showLeaderboard]);
 
   function renderPicksContent() {
     if (!player) {
@@ -302,7 +313,12 @@ export default function App() {
         )}
 
         {view === 'pregame' && (
-          <PreGamePage config={config} />
+          <PreGamePage
+            config={config}
+            player={player}
+            onLogin={() => setView('login')}
+            onViewPicks={() => setView('picks')}
+          />
         )}
 
         {view === 'landing' && (

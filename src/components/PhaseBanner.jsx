@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 
 const PHASE_DISPLAY_NAMES = {
-  registration: 'Phase 1: Registration Open',
-  group_preferences: 'Phase 2: Group Stage Preferences Open',
-  group_scoring: 'Phase 3: Group Stage — Live Scoring',
-  knockout_preferences: 'Phase 4: Knockout Auction Open',
-  knockout_scoring: 'Phase 5: Knockout Stage — Live Scoring',
-  complete: 'Phase 6: Competition Complete',
-  between_phases: 'Preparing Next Phase…',
+  registration:         'Registration Open',
+  group_preferences:    'Group Stage Picks',
+  group_scoring:        'Group Stage',
+  knockout_preferences: 'Knockout Auction',
+  knockout_scoring:     'Knockout Stage',
+  complete:             'Tournament Complete',
+  between_phases:       'Preparing…',
 };
 
 // Map each phase to the config key that holds its closing deadline

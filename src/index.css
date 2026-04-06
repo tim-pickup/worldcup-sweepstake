@@ -80,7 +80,7 @@ body {
   position: sticky;
   top: 0;
   z-index: 100;
-  overflow: visible; /* allow bookmark logo to hang below */
+  overflow: visible; /* allow logo bookmark to hang below */
   background: linear-gradient(180deg, #1c2128 0%, #161b22 100%);
   border-bottom: 1px solid var(--border);
   display: flex;
@@ -1400,12 +1400,12 @@ select option {
   flex-shrink: 0;
 }
 
-/* Bookmark logo that hangs below the nav bar */
+/* Logo bookmark — hangs below the sticky nav like a tab */
 .nav-logo-hang {
-  width: 52px;
-  height: 56px; /* matches nav height — acts as the anchor */
-  flex-shrink: 0;
   position: relative;
+  width: 52px;
+  height: 56px; /* matches nav height — sets the flex footprint */
+  flex-shrink: 0;
 }
 
 .nav-wc-logo-img {
@@ -1413,20 +1413,18 @@ select option {
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  height: 80px;   /* hangs ~24px below nav bottom */
+  height: 82px;      /* 56px nav + 26px hanging below */
   width: auto;
-  max-width: 60px;
+  max-width: 58px;
   object-fit: contain;
   object-position: top center;
-  /* Bookmark shape: squared top (flush with nav), rounded bottom */
-  border-radius: 0 0 12px 12px;
-  background: var(--surface-3);
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  /* Bookmark shape: flush top, rounded bottom */
+  border-radius: 0 0 10px 10px;
+  background: #161b22; /* match nav background */
+  border: 1px solid rgba(245, 158, 11, 0.28);
   border-top: none;
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.55),
-    0 2px 8px rgba(245, 158, 11, 0.12);
-  padding: 4px 6px 10px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(245, 158, 11, 0.1);
+  padding: 4px 5px 10px;
   z-index: 101;
 }
 
@@ -2854,7 +2852,8 @@ select option {
     padding-bottom: 0.5rem;
   }
 
-  .nav-wc-logo-img  { height: 64px; max-width: 48px; }
+  .nav-logo-hang    { width: 44px; }
+  .nav-wc-logo-img  { height: 68px; max-width: 48px; }
   .nav-claude-powered { display: none; }
   .nav-claude-name { font-size: 0.82rem; }
   .nav-btn   { padding: 0.28rem 0.6rem; font-size: 0.78rem; }

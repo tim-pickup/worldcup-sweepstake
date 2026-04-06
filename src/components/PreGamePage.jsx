@@ -495,7 +495,9 @@ function TournamentCountdownView({ config, names }) {
           <div className="tc-marquee-track tc-marquee-reverse">
             {marqueeTeams.map((team, i) => (
               <div key={`${team['Team Name']}-rev-${i}`} className="tc-flag-chip tc-flag-chip-alt">
-                <span className="tc-flag-emoji">{team['Flag Emoji'] || '🏳'}</span>
+                {team['Flag Emoji']?.startsWith('http')
+                  ? <img src={team['Flag Emoji']} alt="" className="tc-flag-img" />
+                  : <span className="tc-flag-emoji">{team['Flag Emoji'] || '🏳'}</span>}
                 <span className="tc-flag-name">{team['Team Name']}</span>
               </div>
             ))}

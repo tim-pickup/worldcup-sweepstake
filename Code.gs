@@ -21,7 +21,7 @@
  *
  * Teams             │ Team Name │ FIFA Ranking │ Tier │ Flag Emoji │ Group
  *
- * Squads            │ Team Name │ Player Name │ Position │ Shirt Number
+ * Squads            │ Team Name │ Player Name │ Position │ Shirt Number │ PlayerPrice
  *
  * Players           │ Player ID │ Name │ PIN │ Registered At
  *
@@ -33,15 +33,17 @@
  *
  * KnockoutTeams     │ Team Name │ Flag Emoji │ Price
  *
- * KnockoutPreferences │ Player ID │ Player Name │ Team Purchased │ Price Paid │ Captain Name │ Total Spend
+ * KnockoutPreferences │ Player ID │ Player Name │ Team Purchased │ Price Paid │ Captain Name │ Captain Price Paid │ Total Spend
  *                     One row per team purchased per player.
- *                     Captain Name and Total Spend are repeated on every row for the player.
+ *                     Captain Name, Captain Price Paid and Total Spend are repeated on every row for the player.
  *
  * Matches           │ Match ID │ Date │ Stage │ Group │ Home Team │ Away Team │ Home Score │ Away Score
+ *                   Stage values: "Group Stage" │ "Round of 16" │ "Quarterfinal" │ "Semifinal" │ "Final"
+ *                   Group values: "Group A" … "Group L" (group stage only; blank for knockout rounds)
  *
  * MatchEvents       │ Match ID │ Event Type │ Team │ Player Name │ Minute │ Benefiting Team
  *
- * Leaderboard       │ Rank │ Player Name │ Total Points │ Goal Points │ Captain Points │ Own Goal Points │ Card Points │ Last Updated
+ * Leaderboard       │ Rank │ Player ID │ Player Name │ Total Points │ Goal Points │ Captain Points │ Own Goal Points │ Card Points
  * ──────────────────────────────────────────────────────────────────────────────
  */
 
@@ -85,8 +87,8 @@ function sheetToObjects(sheet) {
 
 /**
  * Reads the Config tab into a plain object.
- * Expects columns: Setting | Value | Notes
- * The "Setting" column is used as the key.
+ * Expects columns: Key | Value
+ * The "Key" column is used as the key.
  */
 function readConfig() {
   var sheet = getSheet('Config');
@@ -408,7 +410,7 @@ function getGroupPrefsForPlayer(playerId) {
 
 /**
  * Returns all KnockoutPreferences rows for a player as an array.
- * Each row: { Player ID, Player Name, Team Purchased, Price Paid, Captain Name, Total Spend }
+ * Each row: { Player ID, Player Name, Team Purchased, Price Paid, Captain Name, Captain Price Paid, Total Spend }
  */
 function getKnockoutPrefsForPlayer(playerId) {
   var sheet = getSheet('KnockoutPreferences');

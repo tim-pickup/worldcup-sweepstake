@@ -131,25 +131,35 @@ export default function App() {
   const currentPhase = config?.currentPhase ?? null;
   const isRegistrationPhase = currentPhase === 'registration';
 
-  // Leaderboard only appears once scoring begins (group_scoring and beyond).
-  // The gap between GroupPrefsClose and GroupScoringOpen is handled by the
-  // TournamentCountdown state inside PreGamePage.
-  const showLeaderboard = currentPhase !== null && SCORING_PHASES.has(currentPhase);
+  // Has the group stage finished (based on timestamp, not just phase name)?
+  const groupScoringHasClosed =
+    config?.groupScoringClose &&
+    Date.now() >= new Date(config.groupScoringClose).getTime();
+
+  // between_phases after group scoring ended = knockout-era gap (e.g. GroupScoringClose
+  // → KnockoutPrefsOpen, or KnockoutPrefsClose → KnockoutScoringOpen). Treat these
+  // the same as a scoring phase so the leaderboard / KnockoutPage shows instead of
+  // PreGamePage, which would otherwise render the stale "tournament begins in" view.
+  const isKnockoutEraBetween =
+    currentPhase === 'between_phases' && !!groupScoringHasClosed;
+
+  // Leaderboard shows during scoring phases and knockout-era between_phases gaps.
+  const showLeaderboard =
+    currentPhase !== null &&
+    (SCORING_PHASES.has(currentPhase) || isKnockoutEraBetween);
   const isPreGamePhase = currentPhase !== null && !isRegistrationPhase && !showLeaderboard;
 
   // Sub-phase flags for the knockout era
   const isKnockoutPrefs = currentPhase === 'knockout_preferences';
   const isComplete      = currentPhase === 'complete';
 
-  // Group scoring phase but the group stage has already ended — show the
-  // pre-auction landing page (countdown to knockoutPrefsOpen) instead of
-  // the plain leaderboard.
-  const groupScoringClosed =
-    currentPhase === 'group_scoring' &&
-    config?.groupScoringClose &&
-    Date.now() >= new Date(config.groupScoringClose).getTime();
-
-  const showKnockoutPage = isKnockoutPrefs || !!groupScoringClosed;
+  // Show KnockoutPage any time we're in the knockout window but not yet in active
+  // knockout scoring or complete (KnockoutPage itself picks the right sub-view
+  // by checking knockoutPrefsOpen / knockoutPrefsClose timestamps).
+  const showKnockoutPage =
+    isKnockoutPrefs ||
+    isKnockoutEraBetween ||
+    (currentPhase === 'group_scoring' && !!groupScoringHasClosed);
 
   // Redirect to the right home view when phase or leaderboard visibility changes
   useEffect(() => {

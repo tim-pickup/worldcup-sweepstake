@@ -380,8 +380,8 @@ function TournamentCountdownView({ config, names }) {
 
       {/* Bottom tagline */}
       <div className="tc-tagline">
-        <span className="tc-tagline-accent">32 nations.</span>
-        &nbsp;64 matches.&nbsp;
+        <span className="tc-tagline-accent">48 nations.</span>
+        &nbsp;104 matches.&nbsp;
         <span className="tc-tagline-accent">One champion.</span>
       </div>
     </div>

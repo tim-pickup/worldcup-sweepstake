@@ -7,6 +7,8 @@ import RegistrationForm from './components/RegistrationForm.jsx';
 import LoginForm from './components/LoginForm.jsx';
 import LandingPage from './components/LandingPage.jsx';
 import PreGamePage from './components/PreGamePage.jsx';
+import KnockoutPage from './components/KnockoutPage.jsx';
+import TournamentCompletePage from './components/TournamentCompletePage.jsx';
 import GroupPreferences from './components/GroupPreferences.jsx';
 import KnockoutPreferences from './components/KnockoutPreferences.jsx';
 import LockedPicks from './components/LockedPicks.jsx';
@@ -135,6 +137,10 @@ export default function App() {
   const showLeaderboard = currentPhase !== null && SCORING_PHASES.has(currentPhase);
   const isPreGamePhase = currentPhase !== null && !isRegistrationPhase && !showLeaderboard;
 
+  // Sub-phase flags for the knockout era
+  const isKnockoutPrefs   = currentPhase === 'knockout_preferences';
+  const isComplete        = currentPhase === 'complete';
+
   // Redirect to the right home view when phase or leaderboard visibility changes
   useEffect(() => {
     if (!currentPhase) return;
@@ -242,9 +248,23 @@ export default function App() {
       <main className="app-main">
         {view === 'leaderboard' && showLeaderboard && (
           <>
-            <TournamentHeader config={config} leaderRows={leaderRows} />
-            <Leaderboard onRowsChange={setLeaderRows} teamsByName={teamsByName} />
-            <MatchResults teamsByName={teamsByName} />
+            {isComplete ? (
+              <TournamentCompletePage teamsByName={teamsByName} />
+            ) : isKnockoutPrefs ? (
+              <KnockoutPage
+                config={config}
+                player={player}
+                teamsByName={teamsByName}
+                onLogin={() => setView('login')}
+                onViewPicks={() => setView('picks')}
+              />
+            ) : (
+              <>
+                <TournamentHeader config={config} leaderRows={leaderRows} />
+                <Leaderboard onRowsChange={setLeaderRows} teamsByName={teamsByName} />
+                <MatchResults teamsByName={teamsByName} />
+              </>
+            )}
           </>
         )}
 

@@ -9,6 +9,7 @@
  *                   ├──────────────────────┼──────────┤
  *                   │ RegistrationCode     │ ...      │
  *                   │ RegistrationClose    │ ISO date │
+ *                   │ GroupDrawDate        │ ISO date │ Live draw event date/time
  *                   │ GroupPrefsOpen       │ ISO date │
  *                   │ GroupPrefsClose      │ ISO date │
  *                   │ GroupScoringOpen     │ ISO date │
@@ -216,6 +217,7 @@ function handleGetConfig() {
   var config = readConfig();
   return ok({
     registrationClose:    config['RegistrationClose']    || null,
+    groupDrawDate:        config['GroupDrawDate']        || null,
     groupPrefsOpen:       config['GroupPrefsOpen']       || null,
     groupPrefsClose:      config['GroupPrefsClose']      || null,
     groupScoringOpen:     config['GroupScoringOpen']     || null,

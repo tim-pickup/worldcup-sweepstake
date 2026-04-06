@@ -53,11 +53,13 @@ const SCORING_PHASES = new Set(['group_scoring', 'knockout_preferences', 'knocko
 
 function WC2026Logo() {
   return (
-    <img
-      src="https://digitalhub.fifa.com/transform/157d23bf-7e13-4d7b-949e-5d27d340987e/WC26_Logo?&io=transform:fill,height:80&quality=90"
-      alt="FIFA World Cup 2026"
-      className="nav-wc-logo-img"
-    />
+    <div className="nav-logo-hang">
+      <img
+        src="https://digitalhub.fifa.com/transform/157d23bf-7e13-4d7b-949e-5d27d340987e/WC26_Logo?io=transform:fill,height:160,format:png&quality=90"
+        alt="FIFA World Cup 2026"
+        className="nav-wc-logo-img"
+      />
+    </div>
   );
 }
 

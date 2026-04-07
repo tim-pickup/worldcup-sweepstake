@@ -254,6 +254,12 @@ body {
   border: 1px solid rgba(63, 185, 80, 0.3);
 }
 
+.badge-group {
+  background: rgba(88, 166, 255, 0.08);
+  color: #58a6ff;
+  border: 1px solid rgba(88, 166, 255, 0.25);
+}
+
 /* ─── Buttons ────────────────────────────────────────────────────────────────── */
 .btn {
   display: inline-flex;
@@ -473,13 +479,13 @@ select option {
   border: 1px solid transparent;
 }
 
-.phase-banner.phase-registration       { background: rgba(21,101,192,0.15); border-color: rgba(21,101,192,0.35); color: #60a5fa; }
-.phase-banner.phase-group_preferences  { background: rgba(230,81,0,0.15);   border-color: rgba(230,81,0,0.35);   color: #fb923c; }
-.phase-banner.phase-knockout_preferences { background: rgba(230,81,0,0.15); border-color: rgba(230,81,0,0.35);   color: #fb923c; }
-.phase-banner.phase-group_scoring      { background: var(--green-dim);       border-color: rgba(63,185,80,0.35);  color: var(--green); }
-.phase-banner.phase-knockout_scoring   { background: var(--green-dim);       border-color: rgba(63,185,80,0.35);  color: var(--green); }
-.phase-banner.phase-complete           { background: rgba(124,58,237,0.15); border-color: rgba(124,58,237,0.35); color: #a78bfa; }
-.phase-banner.phase-between_phases     { background: var(--surface-2);      border-color: var(--border);         color: var(--text-muted); }
+.phase-banner.phase-registration       { background: rgba(21,101,192,0.15);  color: #60a5fa; }
+.phase-banner.phase-group_preferences  { background: rgba(230,81,0,0.15);    color: #fb923c; }
+.phase-banner.phase-knockout_preferences { background: rgba(230,81,0,0.15);  color: #fb923c; }
+.phase-banner.phase-group_scoring      { background: var(--green-dim);        color: var(--green); }
+.phase-banner.phase-knockout_scoring   { background: var(--green-dim);        color: var(--green); }
+.phase-banner.phase-complete           { background: rgba(124,58,237,0.15);  color: #a78bfa; }
+.phase-banner.phase-between_phases     { background: var(--surface-2);       color: var(--text-muted); }
 
 .phase-banner-name     { font-size: 0.9rem; }
 .phase-banner-countdown { font-size: 0.82rem; opacity: 0.85; white-space: nowrap; }
@@ -710,9 +716,11 @@ select option {
 .match-card-header {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  flex-wrap: nowrap;
+  gap: 0.35rem;
   margin-bottom: 0.55rem;
   font-size: 0.7rem;
+  overflow: hidden;
 }
 
 .match-card-date {
@@ -1420,8 +1428,9 @@ select option {
   object-position: top center;
   /* Bookmark shape: flush top, rounded bottom */
   border-radius: 0 0 10px 10px;
-  background: #161b22; /* match nav background */
-  border: 1px solid rgba(245, 158, 11, 0.28);
+  /* Gradient mirrors nav exactly (56px nav / 82px total = 68.3%) then holds solid */
+  background: linear-gradient(180deg, #1c2128 0%, #161b22 68.3%);
+  border: 1px solid transparent;
   border-top: none;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(245, 158, 11, 0.1);
   padding: 4px 5px 10px;
@@ -3671,27 +3680,71 @@ select option {
 }
 
 /* ─── Responsive ─────────────────────────────────────────────────────────────── */
+
+/* ── Tablet (≤ 768px) ─────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .app-main { padding: 1.25rem 1rem 3rem; }
+
+  .match-grid { grid-template-columns: 1fr 1fr; }
+
+  .tourn-header-top { flex-wrap: wrap; gap: 0.5rem; }
+  .tourn-stats-row  { flex-wrap: wrap; gap: 0.5rem 1rem; }
+
+  .stats-bar { grid-template-columns: repeat(2, 1fr); }
+
+  .leaderboard table { font-size: 0.82rem; }
+  .leaderboard table thead th { padding: 0.45rem 0.65rem; }
+  .leaderboard table tbody td { padding: 0.55rem 0.65rem; }
+}
+
+/* ── Mobile (≤ 600px) ─────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
+  /* Nav */
   .nav {
-    padding: 0 0.85rem;
+    padding: 0.45rem 0.85rem;
     height: auto;
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
+    flex-wrap: nowrap;        /* keep brand + actions on one row */
+    gap: 0.5rem;
   }
-
-  .nav-logo-hang    { width: 44px; }
-  .nav-wc-logo-img  { height: 68px; max-width: 48px; }
+  .nav-logo-hang    { width: 40px; }
+  .nav-wc-logo-img  { height: 62px; max-width: 44px; }
+  .nav-brand-sep    { display: none; }
   .nav-claude-powered { display: none; }
-  .nav-claude-name { font-size: 0.82rem; }
-  .nav-btn   { padding: 0.28rem 0.6rem; font-size: 0.78rem; }
+  .nav-claude-name  { font-size: 0.78rem; }
+  .nav-actions      { gap: 0.3rem; flex-wrap: wrap; justify-content: flex-end; }
+  .nav-btn          { padding: 0.25rem 0.5rem; font-size: 0.74rem; }
+  .nav-player-label { display: none; } /* save space — player name shown elsewhere */
 
-  .card        { padding: 1rem; }
-  .app-main    { padding: 1rem 0.75rem 2.5rem; }
+  /* Layout */
+  .card     { padding: 0.875rem; }
+  .app-main { padding: 0.875rem 0.6rem 2.5rem; }
 
+  /* Phase banner */
+  .phase-banner { padding: 0.65rem 0.875rem; font-size: 0.82rem; }
+
+  /* Tournament header */
+  .tourn-header     { padding: 0.875rem; }
+  .tourn-stats-row  { gap: 0.4rem; }
+  .tourn-stat-value { font-size: 0.82rem; }
+
+  /* Match grid — single column on small phones */
+  .match-grid { grid-template-columns: 1fr; }
+  .match-card { padding: 0.65rem 0.75rem; }
+  .match-card-teams { font-size: 0.82rem; }
+  .match-card-score { padding: 0.18rem 0.45rem; font-size: 0.82rem; }
+  .match-card-score.has-score { font-size: 0.92rem; }
+
+  /* Leaderboard */
+  .leaderboard table { min-width: 360px; font-size: 0.78rem; }
+  .leaderboard table thead th { padding: 0.4rem 0.5rem; font-size: 0.65rem; }
+  .leaderboard table tbody td { padding: 0.45rem 0.5rem; }
+
+  /* Grid picks */
   .knockout-teams-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
   .stats-bar           { grid-template-columns: repeat(2, 1fr); }
   .team-picks-grid     { grid-template-columns: 1fr 1fr; }
 
+  /* Landing page */
   .landing-title       { font-size: 2rem; }
   .landing-cd-unit     { min-width: 54px; padding: 0.5rem 0.6rem; }
   .landing-cd-number   { font-size: 1.5rem; }
@@ -3702,6 +3755,7 @@ select option {
   .landing-hero        { padding: 3.5rem 1rem 3rem; }
   .landing-footer-cta  { padding: 3.5rem 1rem; }
 
+  /* Pre-game page */
   .pregame-hero          { padding: 3.5rem 1rem 2.5rem; }
   .pregame-title         { font-size: 1.9rem; }
   .pregame-countdowns-grid { flex-direction: column; }
@@ -3717,12 +3771,14 @@ select option {
   .pregame-whats-next    { padding: 2rem 1rem 3rem; }
   .pregame-avatars-grid  { grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); }
 
+  /* KnockoutPage countdown */
   .tc-hero     { padding: 3rem 1rem 2rem; }
   .tc-unit     { min-width: 64px; padding: 0.8rem 0.75rem; }
   .tc-number   { font-size: 2.2rem; }
   .tc-sep      { font-size: 1.6rem; }
   .tc-headline { margin-bottom: 2rem; }
 
+  /* Podium */
   .leaderboard-podium { grid-template-columns: 1fr 1.1fr 1fr; gap: 0.5rem; }
   .podium-pts   { font-size: 1.2rem; }
   .podium-1 .podium-pts { font-size: 1.5rem; }
@@ -3730,8 +3786,8 @@ select option {
   .podium-medal { font-size: 1.4rem; }
   .podium-1 .podium-medal { font-size: 1.7rem; }
 
-  /* KnockoutPage mobile */
-  .ko-page        { margin: -1.5rem -1rem 0; }
+  /* KnockoutPage */
+  .ko-page        { margin: -1.5rem -0.6rem 0; }
   .ko-hero        { padding: 3.5rem 1.25rem 3rem; }
   .ko-cd-row-lg   { gap: 0.4rem; }
   .ko-cd-unit-lg  { min-width: 62px; padding: 0.65rem 0.75rem; }
@@ -3740,8 +3796,8 @@ select option {
   .ko-stat-chips  { gap: 0.5rem; }
   .ko-cta-btn     { font-size: 1rem; padding: 0.85rem 1.5rem; }
 
-  /* TournamentCompletePage mobile */
-  .finale-page    { margin: -1.5rem -1rem 0; }
+  /* TournamentCompletePage */
+  .finale-page    { margin: -1.5rem -0.6rem 0; }
   .finale-hero    { padding: 3rem 1.25rem 2.5rem; }
   .finale-trophy-icon { font-size: 3.5rem; }
   .finale-headline { font-size: clamp(1.8rem, 6vw, 2.8rem); }
@@ -3753,5 +3809,5 @@ select option {
   .finale-podium-medal { font-size: 1.8rem; }
   .finale-podium-pos-1 .finale-podium-medal { font-size: 2.2rem; }
   .finale-podium-pillar { display: none; }
-  .finale-lb-table { min-width: 400px; }
+  .finale-lb-table { min-width: 360px; }
 }

@@ -211,11 +211,45 @@ function deleteRowsForPlayer(sheet, playerIdColName, playerId) {
   }
 }
 
+// ─── Cache Helpers ───────────────────────────────────────────────────────────
+
+/**
+ * Returns a cached JSON value or null if absent / expired.
+ * Uses the script-level cache (shared across all users, max 6 hours).
+ */
+function cacheGet(key) {
+  try {
+    var val = CacheService.getScriptCache().get(key);
+    return val ? JSON.parse(val) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Stores a value in the script cache.
+ * @param {string} key
+ * @param {*}      value  — must be JSON-serialisable
+ * @param {number} ttlSec — time-to-live in seconds (max 21600)
+ */
+function cachePut(key, value, ttlSec) {
+  try {
+    CacheService.getScriptCache().put(key, JSON.stringify(value), ttlSec);
+  } catch (e) { /* ignore cache failures */ }
+}
+
+function cacheRemove(key) {
+  try { CacheService.getScriptCache().remove(key); } catch (e) {}
+}
+
 // ─── GET Handlers ────────────────────────────────────────────────────────────
 
 function handleGetConfig() {
+  var cached = cacheGet('config');
+  if (cached) return ok(cached);
+
   var config = readConfig();
-  return ok({
+  var payload = {
     registrationClose:    config['RegistrationClose']    || null,
     groupDrawDate:        config['GroupDrawDate']        || null,
     groupPrefsOpen:       config['GroupPrefsOpen']       || null,
@@ -228,17 +262,29 @@ function handleGetConfig() {
     knockoutScoringClose: config['KnockoutScoringClose'] || null,
     knockoutBudget:       Number(config['KnockoutBudget']) || 1000,
     currentPhase:         getCurrentPhase(config)
-  });
+  };
+  cachePut('config', payload, 120); // 2 minutes — phase transitions are time-based
+  return ok(payload);
 }
 
 function handleGetLeaderboard() {
+  var cached = cacheGet('leaderboard');
+  if (cached) return ok(cached);
+
   // Columns: Rank | Player Name | Total Points | Goal Points | Captain Points | Own Goal Points | Card Points | Last Updated
-  return ok(sheetToObjects(getSheet('Leaderboard')));
+  var data = sheetToObjects(getSheet('Leaderboard'));
+  cachePut('leaderboard', data, 60); // 1 minute — refreshes quickly after each match
+  return ok(data);
 }
 
 function handleGetTeams() {
+  var cached = cacheGet('teams');
+  if (cached) return ok(cached);
+
   // Columns: Team Name | FIFA Ranking | Tier | Flag Emoji | Group
-  return ok(sheetToObjects(getSheet('Teams')));
+  var data = sheetToObjects(getSheet('Teams'));
+  cachePut('teams', data, 3600); // 1 hour — teams never change mid-tournament
+  return ok(data);
 }
 
 /**
@@ -246,6 +292,9 @@ function handleGetTeams() {
  * Response: { "France": [{ playerName, position, shirtNumber }, ...], ... }
  */
 function handleGetSquads() {
+  var cached = cacheGet('squads');
+  if (cached) return ok(cached);
+
   var sheet = getSheet('Squads');
   var data = sheet.getDataRange().getValues();
   if (data.length < 2) return ok({});
@@ -272,12 +321,18 @@ function handleGetSquads() {
       playerPrice: priceCol !== -1 ? (Number(data[i][priceCol]) || 0) : 0
     });
   }
+  cachePut('squads', result, 3600); // 1 hour — squads fixed once tournament starts
   return ok(result);
 }
 
 function handleGetMatches() {
+  var cached = cacheGet('matches');
+  if (cached) return ok(cached);
+
   // Columns: Match ID | Date | Stage | Group | Home Team | Away Team | Home Score | Away Score
-  return ok(sheetToObjects(getSheet('Matches')));
+  var data = sheetToObjects(getSheet('Matches'));
+  cachePut('matches', data, 90); // 90 seconds — scores update during live matches
+  return ok(data);
 }
 
 /**
@@ -286,7 +341,12 @@ function handleGetMatches() {
  * Allocations columns: Player ID | Player Name | Team Name | Tier
  */
 function handleGetAllAllocations() {
-  return ok(sheetToObjects(getSheet('Allocations')));
+  var cached = cacheGet('allAllocations');
+  if (cached) return ok(cached);
+
+  var data = sheetToObjects(getSheet('Allocations'));
+  cachePut('allAllocations', data, 600); // 10 minutes — set once at draw
+  return ok(data);
 }
 
 /**
@@ -294,6 +354,9 @@ function handleGetAllAllocations() {
  * Public — no PIN required. Used to populate the login name picker.
  */
 function handleGetPlayerNames() {
+  var cached = cacheGet('playerNames');
+  if (cached) return ok(cached);
+
   var sheet = getSheet('Players');
   var data = sheet.getDataRange().getValues();
   if (data.length < 2) return ok([]);
@@ -305,6 +368,7 @@ function handleGetPlayerNames() {
     if (data[i][nameCol]) names.push(String(data[i][nameCol]));
   }
   names.sort(function(a, b) { return a.toLowerCase().localeCompare(b.toLowerCase()); });
+  cachePut('playerNames', names, 300); // 5 minutes
   return ok(names);
 }
 
@@ -484,6 +548,7 @@ function handleRegister(body) {
   var registeredAt = new Date().toISOString();
 
   sheet.appendRow([playerId, name, pin, registeredAt]);
+  cacheRemove('playerNames'); // new player — invalidate name list cache
 
   return ok({ playerID: playerId, name: name, message: 'Registration successful' });
 }
@@ -545,13 +610,17 @@ function handleSubmitGroupPreferences(body) {
     sheet.appendRow(['Player ID', 'Player Name', 'Team Name', 'Tier', 'Captain Name', 'Tier 2 Mechanism']);
   }
 
-  // Delete all existing rows for this player, then append fresh rows
+  // Delete all existing rows for this player, then batch-write fresh rows
   deleteRowsForPlayer(sheet, 'Player ID', playerId);
 
+  var newRows = [];
   for (var j = 0; j < captains.length; j++) {
     var c = captains[j];
     var tier2Mechanism = (Number(c.tier) === 2) ? String(c.tier2Mechanism || 'scored') : '';
-    sheet.appendRow([playerId, playerName, c.team, c.tier, c.captain, tier2Mechanism]);
+    newRows.push([playerId, playerName, c.team, c.tier, c.captain, tier2Mechanism]);
+  }
+  if (newRows.length > 0) {
+    sheet.getRange(sheet.getLastRow() + 1, 1, newRows.length, newRows[0].length).setValues(newRows);
   }
 
   return ok({ message: 'Group preferences saved successfully' });
@@ -675,12 +744,16 @@ function handleSubmitKnockoutPreferences(body) {
     sheet.appendRow(['Player ID', 'Player Name', 'Team Purchased', 'Price Paid', 'Captain Name', 'Captain Price Paid', 'Total Spend']);
   }
 
-  // Delete all existing rows for this player, then append one row per team
+  // Delete all existing rows for this player, then batch-write fresh rows
   deleteRowsForPlayer(sheet, 'Player ID', playerId);
 
+  var newKoRows = [];
   for (var r = 0; r < teamsPurchased.length; r++) {
     var tName = String(teamsPurchased[r]);
-    sheet.appendRow([playerId, playerName, tName, priceMap[tName], captain, captainPrice, totalSpend]);
+    newKoRows.push([playerId, playerName, tName, priceMap[tName], captain, captainPrice, totalSpend]);
+  }
+  if (newKoRows.length > 0) {
+    sheet.getRange(sheet.getLastRow() + 1, 1, newKoRows.length, newKoRows[0].length).setValues(newKoRows);
   }
 
   return ok({

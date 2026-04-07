@@ -211,45 +211,11 @@ function deleteRowsForPlayer(sheet, playerIdColName, playerId) {
   }
 }
 
-// ─── Cache Helpers ───────────────────────────────────────────────────────────
-
-/**
- * Returns a cached JSON value or null if absent / expired.
- * Uses the script-level cache (shared across all users, max 6 hours).
- */
-function cacheGet(key) {
-  try {
-    var val = CacheService.getScriptCache().get(key);
-    return val ? JSON.parse(val) : null;
-  } catch (e) {
-    return null;
-  }
-}
-
-/**
- * Stores a value in the script cache.
- * @param {string} key
- * @param {*}      value  — must be JSON-serialisable
- * @param {number} ttlSec — time-to-live in seconds (max 21600)
- */
-function cachePut(key, value, ttlSec) {
-  try {
-    CacheService.getScriptCache().put(key, JSON.stringify(value), ttlSec);
-  } catch (e) { /* ignore cache failures */ }
-}
-
-function cacheRemove(key) {
-  try { CacheService.getScriptCache().remove(key); } catch (e) {}
-}
-
 // ─── GET Handlers ────────────────────────────────────────────────────────────
 
 function handleGetConfig() {
-  var cached = cacheGet('config');
-  if (cached) return ok(cached);
-
   var config = readConfig();
-  var payload = {
+  return ok({
     registrationClose:    config['RegistrationClose']    || null,
     groupDrawDate:        config['GroupDrawDate']        || null,
     groupPrefsOpen:       config['GroupPrefsOpen']       || null,
@@ -262,29 +228,17 @@ function handleGetConfig() {
     knockoutScoringClose: config['KnockoutScoringClose'] || null,
     knockoutBudget:       Number(config['KnockoutBudget']) || 1000,
     currentPhase:         getCurrentPhase(config)
-  };
-  cachePut('config', payload, 120); // 2 minutes — phase transitions are time-based
-  return ok(payload);
+  });
 }
 
 function handleGetLeaderboard() {
-  var cached = cacheGet('leaderboard');
-  if (cached) return ok(cached);
-
   // Columns: Rank | Player Name | Total Points | Goal Points | Captain Points | Own Goal Points | Card Points | Last Updated
-  var data = sheetToObjects(getSheet('Leaderboard'));
-  cachePut('leaderboard', data, 60); // 1 minute — refreshes quickly after each match
-  return ok(data);
+  return ok(sheetToObjects(getSheet('Leaderboard')));
 }
 
 function handleGetTeams() {
-  var cached = cacheGet('teams');
-  if (cached) return ok(cached);
-
   // Columns: Team Name | FIFA Ranking | Tier | Flag Emoji | Group
-  var data = sheetToObjects(getSheet('Teams'));
-  cachePut('teams', data, 3600); // 1 hour — teams never change mid-tournament
-  return ok(data);
+  return ok(sheetToObjects(getSheet('Teams')));
 }
 
 /**
@@ -292,9 +246,6 @@ function handleGetTeams() {
  * Response: { "France": [{ playerName, position, shirtNumber }, ...], ... }
  */
 function handleGetSquads() {
-  var cached = cacheGet('squads');
-  if (cached) return ok(cached);
-
   var sheet = getSheet('Squads');
   var data = sheet.getDataRange().getValues();
   if (data.length < 2) return ok({});
@@ -321,18 +272,12 @@ function handleGetSquads() {
       playerPrice: priceCol !== -1 ? (Number(data[i][priceCol]) || 0) : 0
     });
   }
-  cachePut('squads', result, 3600); // 1 hour — squads fixed once tournament starts
   return ok(result);
 }
 
 function handleGetMatches() {
-  var cached = cacheGet('matches');
-  if (cached) return ok(cached);
-
   // Columns: Match ID | Date | Stage | Group | Home Team | Away Team | Home Score | Away Score
-  var data = sheetToObjects(getSheet('Matches'));
-  cachePut('matches', data, 90); // 90 seconds — scores update during live matches
-  return ok(data);
+  return ok(sheetToObjects(getSheet('Matches')));
 }
 
 /**
@@ -341,12 +286,7 @@ function handleGetMatches() {
  * Allocations columns: Player ID | Player Name | Team Name | Tier
  */
 function handleGetAllAllocations() {
-  var cached = cacheGet('allAllocations');
-  if (cached) return ok(cached);
-
-  var data = sheetToObjects(getSheet('Allocations'));
-  cachePut('allAllocations', data, 600); // 10 minutes — set once at draw
-  return ok(data);
+  return ok(sheetToObjects(getSheet('Allocations')));
 }
 
 /**
@@ -354,9 +294,6 @@ function handleGetAllAllocations() {
  * Public — no PIN required. Used to populate the login name picker.
  */
 function handleGetPlayerNames() {
-  var cached = cacheGet('playerNames');
-  if (cached) return ok(cached);
-
   var sheet = getSheet('Players');
   var data = sheet.getDataRange().getValues();
   if (data.length < 2) return ok([]);
@@ -368,7 +305,6 @@ function handleGetPlayerNames() {
     if (data[i][nameCol]) names.push(String(data[i][nameCol]));
   }
   names.sort(function(a, b) { return a.toLowerCase().localeCompare(b.toLowerCase()); });
-  cachePut('playerNames', names, 300); // 5 minutes
   return ok(names);
 }
 
@@ -548,7 +484,6 @@ function handleRegister(body) {
   var registeredAt = new Date().toISOString();
 
   sheet.appendRow([playerId, name, pin, registeredAt]);
-  cacheRemove('playerNames'); // new player — invalidate name list cache
 
   return ok({ playerID: playerId, name: name, message: 'Registration successful' });
 }

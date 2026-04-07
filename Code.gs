@@ -245,11 +245,8 @@ function cacheRemove(key) {
 // ─── GET Handlers ────────────────────────────────────────────────────────────
 
 function handleGetConfig() {
-  var cached = cacheGet('config');
-  if (cached) return ok(cached);
-
   var config = readConfig();
-  var payload = {
+  return ok({
     registrationClose:    config['RegistrationClose']    || null,
     groupDrawDate:        config['GroupDrawDate']        || null,
     groupPrefsOpen:       config['GroupPrefsOpen']       || null,
@@ -262,9 +259,7 @@ function handleGetConfig() {
     knockoutScoringClose: config['KnockoutScoringClose'] || null,
     knockoutBudget:       Number(config['KnockoutBudget']) || 1000,
     currentPhase:         getCurrentPhase(config)
-  };
-  cachePut('config', payload, 120); // 2 minutes — phase transitions are time-based
-  return ok(payload);
+  });
 }
 
 function handleGetLeaderboard() {

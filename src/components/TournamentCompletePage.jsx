@@ -334,7 +334,7 @@ function FinaleExpandedPicks({ playerName, teamsByName }) {
 export default function TournamentCompletePage({ teamsByName = {} }) {
   const [rows,    setRows]    = useState([]);
   const [loading, setLoading] = useState(true);
-  const [confettiActive, setConfettiActive] = useState(true);
+  const [confettiActive, setConfettiActive] = useState(false);
 
   useEffect(() => {
     getLeaderboard().then(result => {
@@ -343,14 +343,17 @@ export default function TournamentCompletePage({ teamsByName = {} }) {
         setRows(sorted);
       }
       setLoading(false);
+      // Fire confetti only after scores are visible on the page
+      setConfettiActive(true);
     });
   }, []);
 
-  // Stop confetti after 12 seconds
+  // Stop confetti 12 seconds after it starts (triggered by data load or button)
   useEffect(() => {
+    if (!confettiActive) return;
     const timer = setTimeout(() => setConfettiActive(false), 12000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [confettiActive]);
 
   const winner = rows[0];
 

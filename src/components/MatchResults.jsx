@@ -58,7 +58,7 @@ export default function MatchResults({ teamsByName = {} }) {
               <div className="match-card-header">
                 <span className="badge badge-stage">{m['Stage'] ?? 'Match'}</span>
                 {m['Group'] && (
-                  <span className="badge badge-tier-2">Group {m['Group']}</span>
+                  <span className="badge badge-group">{m['Group']}</span>
                 )}
                 <span className="match-card-date">{dateStr}</span>
               </div>

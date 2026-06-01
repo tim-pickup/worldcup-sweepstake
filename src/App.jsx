@@ -191,7 +191,7 @@ export default function App() {
       return <KnockoutPreferences player={player} teamsByName={teamsByName} />;
     }
     // Any other phase — show locked read-only picks
-    return <LockedPicks player={player} phase={currentPhase} teamsByName={teamsByName} />;
+    return <LockedPicks player={player} phase={currentPhase} config={config} teamsByName={teamsByName} />;
   }
 
   return (

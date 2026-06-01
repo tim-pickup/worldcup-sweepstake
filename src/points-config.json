@@ -1,0 +1,7 @@
+[
+  { "icon": "⚽", "label": "Goal (scored or conceded, depending on tier)", "pts": "+1" },
+  { "icon": "👑", "label": "Captain scores a goal", "pts": "+1" },
+  { "icon": "🔴", "label": "Own goal", "pts": "−1" },
+  { "icon": "🟨", "label": "Yellow card", "pts": "−1" },
+  { "icon": "🟥", "label": "Red card", "pts": "−2" }
+]

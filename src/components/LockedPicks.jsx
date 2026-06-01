@@ -11,6 +11,33 @@ const PHASE_CONTEXT = {
   complete:           'The tournament is complete. Final picks below.',
 };
 
+function useCountdown(target) {
+  const [parts, setParts] = useState({ d: 0, h: 0, m: 0, s: 0, expired: false, loaded: false });
+  useEffect(() => {
+    if (!target) return;
+    const deadline = new Date(target);
+    function tick() {
+      const diff = deadline - Date.now();
+      if (diff <= 0) {
+        setParts({ d: 0, h: 0, m: 0, s: 0, expired: true, loaded: true });
+        return;
+      }
+      setParts({
+        d: Math.floor(diff / 86400000),
+        h: Math.floor((diff % 86400000) / 3600000),
+        m: Math.floor((diff % 3600000) / 60000),
+        s: Math.floor((diff % 60000) / 1000),
+        expired: false,
+        loaded: true,
+      });
+    }
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [target]);
+  return parts;
+}
+
 function TeamCard({ alloc, groupPrefs, teamsByName }) {
   const tier = alloc['Tier'];
   const teamName = alloc['Team Name'];
@@ -40,7 +67,7 @@ function TeamCard({ alloc, groupPrefs, teamsByName }) {
   );
 }
 
-export default function LockedPicks({ player, phase, teamsByName = {} }) {
+export default function LockedPicks({ player, phase, config, teamsByName = {} }) {
   const [allocations, setAllocations] = useState([]);
   const [groupPrefs, setGroupPrefs] = useState([]);
   const [koPrefs, setKoPrefs] = useState([]);
@@ -73,10 +100,14 @@ export default function LockedPicks({ player, phase, teamsByName = {} }) {
     fetchData();
   }, [player.name, player.pin]);
 
+  const groupPrefsOpenTarget = config?.groupPrefsOpen ?? null;
+  const preOpenCountdown = useCountdown(groupPrefsOpenTarget);
+
   if (loading) return <div className="card"><div className="loading">Loading your picks…</div></div>;
   if (error)   return <div className="card"><div className="error">{error}</div></div>;
 
   const contextMsg = PHASE_CONTEXT[phase] ?? 'Your picks are now locked.';
+  const isPreOpen = !(phase in PHASE_CONTEXT) && groupPrefsOpenTarget && !preOpenCountdown.expired;
   const sortedAllocs = allocations.slice().sort((a, b) => (a['Tier'] ?? 0) - (b['Tier'] ?? 0));
   const hasKo  = koPrefs.length > 0;
   const koCapt = koPrefs[0]?.['Captain Name'];
@@ -84,9 +115,29 @@ export default function LockedPicks({ player, phase, teamsByName = {} }) {
 
   return (
     <div>
-      <div className="locked-banner">
-        🔒 Picks Locked — {contextMsg}
-      </div>
+      {isPreOpen ? (
+        <div className="locked-banner locked-banner--pending">
+          <div className="locked-banner-title">⏳ Picks Open Soon</div>
+          {preOpenCountdown.loaded ? (
+            <div className="locked-banner-countdown">
+              <span>{String(preOpenCountdown.d).padStart(2, '0')}d</span>
+              <span className="locked-cd-sep">:</span>
+              <span>{String(preOpenCountdown.h).padStart(2, '0')}h</span>
+              <span className="locked-cd-sep">:</span>
+              <span>{String(preOpenCountdown.m).padStart(2, '0')}m</span>
+              <span className="locked-cd-sep">:</span>
+              <span>{String(preOpenCountdown.s).padStart(2, '0')}s</span>
+            </div>
+          ) : (
+            <div className="locked-banner-sub">Date to be confirmed</div>
+          )}
+          <div className="locked-banner-sub">Your group picks window hasn&apos;t opened yet.</div>
+        </div>
+      ) : (
+        <div className="locked-banner">
+          🔒 Picks Locked — {contextMsg}
+        </div>
+      )}
 
       {/* Group Stage */}
       <div className="card">

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getPlayerNames } from '../api.js';
+import scoringRows from '../points-config.json';
 
 function useCountdown(target) {
   const [parts, setParts] = useState({ d: 0, h: 0, m: 0, s: 0, expired: false });
@@ -110,6 +111,8 @@ export default function LandingPage({ config, onRegister }) {
             <span className="landing-title-accent">2026 Sweepstake</span>
           </h1>
 
+          <div className="landing-edition-tag">DIGITAL EDITION ™</div>
+
           <p className="landing-subtitle">
             Pick your teams, name your captains, and compete for glory across the full tournament.
             <br />
@@ -211,34 +214,16 @@ export default function LandingPage({ config, onRegister }) {
 
           {/* Knockout Stage */}
           <div className="landing-phase-label">🏆 Knockout Stage</div>
-          <p className="landing-section-sub" style={{ marginBottom: '1rem' }}>
-            Once the group stage is done, every player gets a coin budget to bid on knockout teams. Buy as many as your budget allows, pick a captain, and earn points as teams progress.
-          </p>
-          <div className="landing-how-card" style={{ '--card-accent': 'var(--gold)', marginBottom: '1.75rem' }}>
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-              <div style={{ flex: 1, minWidth: 180 }}>
-                <div className="landing-how-icon">🪙</div>
-                <div className="landing-how-title">Auction Budget</div>
-                <p className="landing-how-desc">Spend your coins on knockout teams. Go all-in on one favourite or spread across several — it's your call.</p>
-              </div>
-              <div style={{ flex: 1, minWidth: 180 }}>
-                <div className="landing-how-icon">👑</div>
-                <div className="landing-how-title">Captain Bonus</div>
-                <p className="landing-how-desc">Name a captain from any of your purchased teams' squads. Every goal they score earns you an extra point.</p>
-              </div>
-            </div>
+          <div className="landing-tbc-card" style={{ marginBottom: '1.75rem' }}>
+            <div className="landing-tbc-icon">⏳</div>
+            <div className="landing-tbc-heading">To Be Confirmed</div>
+            <p className="landing-tbc-sub">Knockout stage rules will be announced before the group stage ends.</p>
           </div>
 
           {/* Scoring */}
           <div className="landing-phase-label">📊 Points Reference</div>
           <div className="landing-scoring-grid">
-            {[
-              { icon: '⚽', label: 'Goal (scored or conceded, depending on tier)', pts: '+1' },
-              { icon: '👑', label: 'Captain scores a goal', pts: '+1' },
-              { icon: '🔴', label: 'Own goal', pts: '−1' },
-              { icon: '🟨', label: 'Yellow card', pts: '−1' },
-              { icon: '🟥', label: 'Red card', pts: '−2' },
-            ].map(({ icon, label, pts }) => (
+            {scoringRows.map(({ icon, label, pts }) => (
               <div key={label} className="landing-score-row">
                 <span>{icon} {label}</span>
                 <span className="landing-score-pts" style={{ color: pts.startsWith('+') ? 'var(--green)' : 'var(--danger)' }}>

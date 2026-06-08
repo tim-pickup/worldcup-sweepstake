@@ -954,6 +954,100 @@ select option {
   font-weight: 400;
 }
 
+/* ─── Scoring Rules ──────────────────────────────────────────────────────────── */
+.scoring-rules {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.25rem;
+  background: var(--surface-2);
+  margin-top: 1.5rem;
+}
+
+.scoring-rules-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin: 0 0 0.5rem 0;
+}
+
+.scoring-rules-intro {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin: 0 0 0.9rem 0;
+  line-height: 1.5;
+}
+
+.scoring-rules-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.scoring-rule-row {
+  display: grid;
+  grid-template-columns: 1.5rem 1fr auto auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.83rem;
+}
+
+.scoring-rule-row:last-child {
+  border-bottom: none;
+}
+
+.scoring-rule-icon {
+  text-align: center;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.scoring-rule-label {
+  color: var(--text);
+}
+
+.scoring-rule-note {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.scoring-rule-pts {
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-align: right;
+  white-space: nowrap;
+  min-width: 2rem;
+}
+
+/* Compact variant used inside PreGamePage hero */
+.scoring-rules-compact {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+  margin-top: 0;
+}
+
+.scoring-rules-compact .scoring-rules-title {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.scoring-rules-compact .scoring-rules-intro {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.scoring-rules-compact .scoring-rule-label {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.scoring-rules-compact .scoring-rule-note {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.scoring-rules-compact .scoring-rule-row {
+  border-bottom-color: rgba(255, 255, 255, 0.07);
+}
+
 /* ─── Loading / Empty ────────────────────────────────────────────────────────── */
 .loading {
   text-align: center;

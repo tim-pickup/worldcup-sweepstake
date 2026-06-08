@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { getPlayerNames, getTeams, getAllAllocations } from '../api.js';
+import ScoringRules from './ScoringRules.jsx';
 
 function useCountdown(target) {
   const [parts, setParts] = useState({ d: 0, h: 0, m: 0, s: 0, expired: false, loaded: false });
@@ -360,6 +361,7 @@ function PicksOpenView({ config, names, loadingNames, player, onLogin, onViewPic
                 <p className="pregame-picks-cta-note">Log in with your name and PIN to see your allocated teams</p>
               </>
             )}
+            <ScoringRules style={{ maxWidth: '540px', width: '100%', marginTop: '1.75rem' }} className="scoring-rules-compact" />
           </div>
         </div>
       </div>

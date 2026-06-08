@@ -49,14 +49,12 @@ export default function GroupPreferences({ player, teamsByName = {} }) {
         saved.forEach((row) => {
           const team = row['Team Name'];
           if (row['Captain Name']) caps[team] = row['Captain Name'];
-          if (row['Tier 2 Mechanism']) {
-            const raw = row['Tier 2 Mechanism'];
-            // Normalize to the internal radio values ('scored' | 'conceded')
-            // regardless of how the sheet stores the value.
-            const lower = raw.toLowerCase();
+          const mechRaw = row['Tier 2 Mechanism'] ?? row['2 Mechanism'];
+          if (mechRaw) {
+            const lower = mechRaw.toLowerCase();
             mechs[team] = lower.includes('conceded') ? 'conceded'
               : lower.includes('scored') ? 'scored'
-              : raw;
+              : mechRaw;
           }
         });
         setCaptains(caps);

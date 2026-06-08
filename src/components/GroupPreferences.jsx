@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getAllocations, getSquads, submitGroupPreferences } from '../api.js';
 import Flag from './Flag.jsx';
+import ScoringRules from './ScoringRules.jsx';
 
 export default function GroupPreferences({ player, teamsByName = {} }) {
   const { pin, name } = player;
@@ -48,7 +49,15 @@ export default function GroupPreferences({ player, teamsByName = {} }) {
         saved.forEach((row) => {
           const team = row['Team Name'];
           if (row['Captain Name']) caps[team] = row['Captain Name'];
-          if (row['Tier 2 Mechanism']) mechs[team] = row['Tier 2 Mechanism'];
+          if (row['Tier 2 Mechanism']) {
+            const raw = row['Tier 2 Mechanism'];
+            // Normalize to the internal radio values ('scored' | 'conceded')
+            // regardless of how the sheet stores the value.
+            const lower = raw.toLowerCase();
+            mechs[team] = lower.includes('conceded') ? 'conceded'
+              : lower.includes('scored') ? 'scored'
+              : raw;
+          }
         });
         setCaptains(caps);
         setTier2Mechanisms(mechs);
@@ -202,6 +211,8 @@ export default function GroupPreferences({ player, teamsByName = {} }) {
           </button>
         )}
       </form>
+
+      <ScoringRules />
     </div>
   );
 }

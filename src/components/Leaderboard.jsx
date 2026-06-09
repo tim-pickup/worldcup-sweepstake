@@ -214,8 +214,8 @@ export default function Leaderboard({ onRowsChange, teamsByName = {} }) {
                   <th className="col-pts">Pts</th>
                   <th className="col-sub">Goals</th>
                   <th className="col-sub">Capt</th>
-                  <th className="col-sub">OG</th>
-                  <th className="col-sub">Cards</th>
+                  <th className="col-sub">Results</th>
+                  <th className="col-sub">Penalties</th>
                   <th style={{ width: 24 }} />
                 </tr>
               </thead>
@@ -246,10 +246,10 @@ export default function Leaderboard({ onRowsChange, teamsByName = {} }) {
                       <td className="col-pts">
                         <span className={`pts-badge${rank === 1 ? ' pts-badge-gold' : ''}`}>{pts}</span>
                       </td>
-                      <td className="col-sub">{row['Goal Points']    ?? 0}</td>
-                      <td className="col-sub">{row['Captain Points'] ?? 0}</td>
-                      <td className="col-sub">{row['Own Goal Points'] ?? 0}</td>
-                      <td className="col-sub">{row['Card Points']    ?? 0}</td>
+                      <td className="col-sub">{row['Goal Points']     ?? 0}</td>
+                      <td className="col-sub">{row['Captain Points']  ?? 0}</td>
+                      <td className="col-sub">{row['Result Points']   ?? 0}</td>
+                      <td className="col-sub">{row['Penalty Points']  ?? 0}</td>
                       <td style={{ textAlign: 'center' }}>
                         <span className={`leaderboard-chevron${isOpen ? ' open' : ''}`}>▼</span>
                       </td>

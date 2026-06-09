@@ -7,6 +7,13 @@ const RULES = [
     color: 'var(--gold)',
   },
   {
+    icon: '🎯',
+    label: 'Captain assist',
+    pts: '+1',
+    note: 'All tiers',
+    color: 'var(--gold)',
+  },
+  {
     icon: '⚽',
     label: 'Goal (Tier 1, or Tier 2 → Goals Scored)',
     pts: '+1',

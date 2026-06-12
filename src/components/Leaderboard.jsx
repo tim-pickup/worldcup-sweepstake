@@ -80,16 +80,23 @@ const EVENT_ICONS = {
 };
 
 function describeActivityEvent(entry) {
-  const type    = entry['Event Type'];
-  const player  = entry['Event Player'];
-  const minute  = entry['Minute'];
-  const team    = entry['Player Team'];
+  const type     = entry['Event Type'];
+  const player   = entry['Event Player'];
+  const minute   = entry['Minute'];
+  const team     = entry['Player Team'];
+  const category = entry['Category'];
   const minuteStr = (minute !== '' && minute != null) ? ` ${minute}'` : '';
 
-  if (player) return `${player}${minuteStr} — ${type}`;
+  let label = type;
+  if (type === 'Goal') {
+    if (category === 'Goals Scored')   label = 'Goal Scored';
+    else if (category === 'Goals Conceded') label = 'Goal Conceded';
+  }
+
+  if (player) return `${player}${minuteStr} — ${label}`;
   if (type === 'Match Win')  return `${team} won the match`;
   if (type === 'Match Draw') return `${team} drew`;
-  return `${type}${minuteStr}`;
+  return `${label}${minuteStr}`;
 }
 
 function PointsBadge({ points }) {

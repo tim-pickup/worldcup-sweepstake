@@ -667,6 +667,65 @@ select option {
   gap: 0.5rem;
 }
 
+/* Points activity breakdown */
+.points-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.points-activity-match {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.875rem;
+}
+
+.points-activity-match-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  padding-bottom: 0.4rem;
+  margin-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.points-activity-event {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  padding: 0.15rem 0;
+}
+
+.points-event-icon {
+  flex: none;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.points-event-desc {
+  flex: 1;
+}
+
+.points-event-points {
+  flex: none;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.points-event-positive {
+  color: var(--green);
+}
+
+.points-event-negative {
+  color: var(--danger);
+}
+
 .ko-pick-chip {
   background: var(--surface);
   border: 1px solid var(--border);

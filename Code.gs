@@ -44,6 +44,11 @@
  *
  * MatchEvents       │ Match ID │ Event Type │ Team │ Player Name │ Minute │ Benefiting Team
  *
+ * Points Activity   │ Match ID │ Event Type │ Event Team │ Player Team │ Event Player │ Minute │ Player ID │ Player Name │ Points │ Category
+ *                   One row per point-scoring event credited to a player (goals, captain bonuses,
+ *                   cards, match wins, etc.). "Player Team" is the player's picked team that the
+ *                   points were earned through.
+ *
  * Leaderboard       │ Rank │ Player ID │ Player Name │ Total Points │ Goal Points │ Captain Points │ Own Goal Points │ Card Points
  * ──────────────────────────────────────────────────────────────────────────────
  */
@@ -337,8 +342,29 @@ function handleGetPlayerPicks(playerName) {
     player:               { 'Player ID': playerId, Name: player['Name'] },
     allocations:          allocs,
     groupPreferences:     getGroupPrefsForPlayer(playerId),
-    knockoutPreferences:  getKnockoutPrefsForPlayer(playerId)
+    knockoutPreferences:  getKnockoutPrefsForPlayer(playerId),
+    pointsActivity:       getPointsActivityForPlayer(playerId)
   });
+}
+
+/**
+ * Returns all Points Activity rows for a player, sorted by Match ID then Minute.
+ * Points Activity columns: Match ID | Event Type | Event Team | Player Team | Event Player |
+ * Minute | Player ID | Player Name | Points | Category
+ */
+function getPointsActivityForPlayer(playerId) {
+  var activity = sheetToObjects(getSheet('Points Activity')).filter(function (row) {
+    return String(row['Player ID']) === String(playerId);
+  });
+  activity.sort(function (a, b) {
+    var matchA = String(a['Match ID']);
+    var matchB = String(b['Match ID']);
+    if (matchA !== matchB) return matchA < matchB ? -1 : 1;
+    var minuteA = a['Minute'] === '' || a['Minute'] == null ? Infinity : Number(a['Minute']);
+    var minuteB = b['Minute'] === '' || b['Minute'] == null ? Infinity : Number(b['Minute']);
+    return minuteA - minuteB;
+  });
+  return activity;
 }
 
 /**

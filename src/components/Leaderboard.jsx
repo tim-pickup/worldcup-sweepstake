@@ -93,7 +93,7 @@ function describeActivityEvent(entry) {
     else if (category === 'Goals Conceded') label = 'Goal Conceded';
   }
 
-  if (player) return `${player}${minuteStr} — ${label}`;
+  if (player) return `${player}${minuteStr} — ${label}${team ? ` (${team})` : ''}`;
   if (type === 'Match Win')  return `${team} won the match`;
   if (type === 'Match Draw') return `${team} drew`;
   return `${label}${minuteStr}`;
@@ -105,7 +105,15 @@ function PointsBadge({ points }) {
   return <span className={`points-event-points ${cls}`}>{value > 0 ? `+${value}` : value}</span>;
 }
 
-function PointsActivityBreakdown({ activity }) {
+function PointsActivityBreakdown({ activity, matches = [] }) {
+  const matchesById = useMemo(() => {
+    const map = {};
+    for (const match of matches) {
+      map[String(match['Match ID'])] = match;
+    }
+    return map;
+  }, [matches]);
+
   const groups = useMemo(() => {
     const byMatch = {};
     for (const entry of activity) {
@@ -121,10 +129,12 @@ function PointsActivityBreakdown({ activity }) {
       <div className="points-activity-list">
         {groups.map(([matchId, entries]) => {
           const subtotal = entries.reduce((sum, e) => sum + (Number(e['Points']) || 0), 0);
+          const match = matchesById[String(matchId)];
+          const heading = match ? `${match['Home Team']} v ${match['Away Team']}` : `Match ${matchId}`;
           return (
             <div className="points-activity-match" key={matchId}>
               <div className="points-activity-match-header">
-                <span>Match {matchId}</span>
+                <span>{heading}</span>
                 <PointsBadge points={subtotal} />
               </div>
               {entries.map((entry, i) => (
@@ -142,7 +152,7 @@ function PointsActivityBreakdown({ activity }) {
   );
 }
 
-function ExpandedPicks({ playerName, teamsByName }) {
+function ExpandedPicks({ playerName, teamsByName, matches }) {
   const [picks, setPicks]   = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState('');
@@ -215,7 +225,7 @@ function ExpandedPicks({ playerName, teamsByName }) {
           </div>
         </div>
       )}
-      {hasActivity && <PointsActivityBreakdown activity={pointsActivity} />}
+      {hasActivity && <PointsActivityBreakdown activity={pointsActivity} matches={matches} />}
     </div>
   );
 }
@@ -382,7 +392,7 @@ export default function Leaderboard({ onRowsChange, teamsByName = {} }) {
                     isOpen && (
                       <tr key={`picks-${name}`} className="picks-row">
                         <td colSpan={COL_COUNT + 1}>
-                          <ExpandedPicks playerName={name} teamsByName={teamsByName} />
+                          <ExpandedPicks playerName={name} teamsByName={teamsByName} matches={matches} />
                         </td>
                       </tr>
                     ),

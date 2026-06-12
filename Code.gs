@@ -44,7 +44,7 @@
  *
  * MatchEvents       │ Match ID │ Event Type │ Team │ Player Name │ Minute │ Benefiting Team
  *
- * Points Activity   │ Match ID │ Event Type │ Event Team │ Player Team │ Event Player │ Minute │ Player ID │ Player Name │ Points │ Category
+ * PointsActivity    │ Match ID │ Event Type │ Event Team │ Player Team │ Event Player │ Minute │ Player ID │ Player Name │ Points │ Category
  *                   One row per point-scoring event credited to a player (goals, captain bonuses,
  *                   cards, match wins, etc.). "Player Team" is the player's picked team that the
  *                   points were earned through.
@@ -348,12 +348,12 @@ function handleGetPlayerPicks(playerName) {
 }
 
 /**
- * Returns all Points Activity rows for a player, sorted by Match ID then Minute.
- * Points Activity columns: Match ID | Event Type | Event Team | Player Team | Event Player |
+ * Returns all PointsActivity rows for a player, sorted by Match ID then Minute.
+ * PointsActivity columns: Match ID | Event Type | Event Team | Player Team | Event Player |
  * Minute | Player ID | Player Name | Points | Category
  */
 function getPointsActivityForPlayer(playerId) {
-  var activity = sheetToObjects(getSheet('Points Activity')).filter(function (row) {
+  var activity = sheetToObjects(getSheet('PointsActivity')).filter(function (row) {
     return String(row['Player ID']) === String(playerId);
   });
   activity.sort(function (a, b) {

@@ -833,6 +833,44 @@ select option {
   font-weight: 900;
 }
 
+/* ─── Match card — clickable / expanded states ───────────────────────────────── */
+.match-card.clickable { cursor: pointer; }
+.match-card.match-expanded { border-color: var(--border-bright); }
+
+.match-players-panel {
+  margin-top: 0.75rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border);
+}
+
+.match-player-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 0;
+  font-size: 0.8rem;
+}
+
+.match-player-name { flex: 1; font-weight: 600; color: var(--text); }
+.match-player-team { color: var(--text-muted); font-size: 0.75rem; }
+.match-player-pts  { font-weight: 700; color: var(--gold); min-width: 3.5rem; text-align: right; white-space: nowrap; }
+.match-player-pts.zero { color: var(--text-muted); font-weight: 400; }
+
+/* ─── Load more button ───────────────────────────────────────────────────────── */
+.load-more-btn {
+  display: block;
+  margin: 1rem auto 0;
+  padding: 0.45rem 1.25rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.82rem;
+  transition: border-color var(--transition), color var(--transition);
+}
+.load-more-btn:hover { border-color: var(--border-bright); color: var(--text); }
+
 /* ─── Budget Bar ─────────────────────────────────────────────────────────────── */
 .budget-bar-wrap {
   margin-bottom: 1.25rem;

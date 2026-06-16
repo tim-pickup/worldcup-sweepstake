@@ -44,7 +44,7 @@ function TeamPickCard({ alloc, groupPrefs, teamsByName }) {
   const teamName  = alloc['Team Name'];
   const pref      = groupPrefs?.find(p => p['Team Name'] === teamName);
   const captain   = pref?.['Captain Name'];
-  const mechanism = pref?.['Tier 2 Mechanism'];
+  const mechanism = pref?.['Tier 2 Mechanism'] ?? pref?.['2 Mechanism'];
 
   return (
     <div className={`team-pick-card tier-${tier}`}>
@@ -54,7 +54,7 @@ function TeamPickCard({ alloc, groupPrefs, teamsByName }) {
       </div>
       <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', marginBottom: '0.3rem' }}>
         <span className={`badge badge-tier-${tier}`}>{TIER_LABELS[tier] ?? `Tier ${tier}`}</span>
-        {tier === 2 && mechanism && (
+        {Number(tier) === 2 && mechanism && (
           <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
             ⚡ {mechanism === 'scored' ? 'Goals Scored' : 'Goals Conceded'}
           </span>

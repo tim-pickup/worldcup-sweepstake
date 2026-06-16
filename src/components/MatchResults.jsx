@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { getMatches, getAllAllocations, getPlayerPicks } from '../api.js';
 import Flag from './Flag.jsx';
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 6;
 
 function MatchPlayersPanel({ matchId, involvedPlayers, teamsByName, playerPicksCache, loadingPlayers }) {
   if (involvedPlayers.length === 0) {

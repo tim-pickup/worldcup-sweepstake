@@ -39,12 +39,11 @@ function MatchPlayersPanel({ matchId, involvedPlayers, teamsByName, playerPicksC
       {sorted.map(({ playerName, teams, pts, isLoading }) => (
         <div className="match-player-row" key={playerName}>
           <span className="match-player-name">{playerName}</span>
-          <span className="match-player-team">
+          <span className="match-player-team" title={teams.join(', ')}>
             {teams.map((t, i) => (
               <span key={t}>
-                {i > 0 && ', '}
-                <Flag value={teamsByName[t]?.['Flag Emoji']} />
-                {t}
+                {i > 0 && ' '}
+                <Flag value={teamsByName[t]?.['Flag Emoji']} style={{ marginRight: 0 }} />
               </span>
             ))}
           </span>
@@ -177,16 +176,20 @@ export default function MatchResults({ teamsByName = {} }) {
                 <span className="match-card-date">{dateStr}</span>
               </div>
               <div className="match-card-teams">
-                <span className={`match-card-team home${homeWon ? ' winner' : ''}`}>
-                  <Flag value={teamsByName[m['Home Team']]?.['Flag Emoji']} />
-                  {m['Home Team']}
+                <span
+                  className={`match-card-team home${homeWon ? ' winner' : awayWon ? ' loser' : ''}`}
+                  title={m['Home Team']}
+                >
+                  <Flag value={teamsByName[m['Home Team']]?.['Flag Emoji']} style={{ fontSize: '1.6rem', marginRight: 0 }} />
                 </span>
                 <span className={`match-card-score${hasScore ? ' has-score' : ''}`}>
                   {hasScore ? `${homeScore} – ${awayScore}` : 'vs'}
                 </span>
-                <span className={`match-card-team away${awayWon ? ' winner' : ''}`}>
-                  <Flag value={teamsByName[m['Away Team']]?.['Flag Emoji']} />
-                  {m['Away Team']}
+                <span
+                  className={`match-card-team away${awayWon ? ' winner' : homeWon ? ' loser' : ''}`}
+                  title={m['Away Team']}
+                >
+                  <Flag value={teamsByName[m['Away Team']]?.['Flag Emoji']} style={{ fontSize: '1.6rem', marginRight: 0 }} />
                 </span>
               </div>
 

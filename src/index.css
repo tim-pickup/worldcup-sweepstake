@@ -802,29 +802,21 @@ select option {
 .match-card-teams {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  font-size: 0.875rem;
+  justify-content: center;
+  gap: 0.75rem;
 }
 
 .match-card-team {
-  font-weight: 600;
-  color: var(--text-muted);
-  flex: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: color var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  transition: opacity var(--transition);
+  line-height: 1;
 }
 
-.match-card-team.winner {
-  font-weight: 800;
-  color: var(--text-heading);
-}
-
-.match-card-team.home { text-align: right; }
-.match-card-team.away { text-align: left; }
+.match-card-team.winner { opacity: 1; }
+.match-card-team.loser  { opacity: 0.35; }
 
 .match-card-score {
   background: var(--surface-3);
@@ -869,7 +861,7 @@ select option {
 .match-player-row:last-child { border-bottom: none; }
 
 .match-player-name { flex: 1; font-weight: 600; color: var(--text); }
-.match-player-team { color: var(--text-muted); font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.match-player-team { display: flex; align-items: center; gap: 0.15rem; cursor: default; }
 .match-player-pts  { font-weight: 700; color: var(--gold); min-width: 3.5rem; text-align: right; white-space: nowrap; }
 .match-player-pts.zero { color: var(--text-muted); font-weight: 400; }
 

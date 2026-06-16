@@ -811,6 +811,10 @@ select option {
   font-weight: 600;
   color: var(--text-muted);
   flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   transition: color var(--transition);
 }
 
@@ -865,7 +869,7 @@ select option {
 .match-player-row:last-child { border-bottom: none; }
 
 .match-player-name { flex: 1; font-weight: 600; color: var(--text); }
-.match-player-team { color: var(--text-muted); font-size: 0.75rem; }
+.match-player-team { color: var(--text-muted); font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .match-player-pts  { font-weight: 700; color: var(--gold); min-width: 3.5rem; text-align: right; white-space: nowrap; }
 .match-player-pts.zero { color: var(--text-muted); font-weight: 400; }
 

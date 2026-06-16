@@ -165,16 +165,16 @@ export default function MatchResults({ teamsByName = {} }) {
               onClick={() => handleMatchClick(m, hasScore)}
             >
               <div className="match-card-header">
-                <span className="badge badge-stage">{m['Stage'] ?? 'Match'}</span>
-                {m['Group'] && (
-                  <span className="badge badge-group">{m['Group']}</span>
-                )}
+                <div className="match-card-header-top">
+                  <span className="badge badge-stage">{m['Stage'] ?? 'Match'}</span>
+                  {m['Group'] && (
+                    <span className="badge badge-group">{m['Group']}</span>
+                  )}
+                  {hasScore && (
+                    <span className="match-card-chevron">{isExpanded ? '▲' : '▼'}</span>
+                  )}
+                </div>
                 <span className="match-card-date">{dateStr}</span>
-                {hasScore && (
-                  <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginLeft: '0.25rem' }}>
-                    {isExpanded ? '▲' : '▼'}
-                  </span>
-                )}
               </div>
               <div className="match-card-teams">
                 <span className={`match-card-team home${homeWon ? ' winner' : ''}`}>

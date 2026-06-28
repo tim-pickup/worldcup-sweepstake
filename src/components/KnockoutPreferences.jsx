@@ -1,14 +1,14 @@
-import { useState, useEffect, useMemo } from 'react';
-import { getKnockoutTeams, getSquads, getConfig, submitKnockoutPreferences } from '../api.js';
+import { useState, useEffect } from 'react';
+import { getKnockoutAllocations, getSquads, submitKnockoutPreferences } from '../api.js';
 import Flag from './Flag.jsx';
+import ScoringRules from './ScoringRules.jsx';
 
 export default function KnockoutPreferences({ player, teamsByName = {} }) {
   const { pin, name } = player;
-  const [teams, setTeams] = useState([]);
-  const [knockoutPlayers, setKnockoutPlayers] = useState([]); // all players from all knockout teams
-  const [budget, setBudget] = useState(1000);
-  const [selected, setSelected] = useState(new Set()); // Set of team names
-  const [captain, setCaptain] = useState('');
+  const [allocations, setAllocations] = useState([]);
+  const [squads, setSquads] = useState({});
+  const [captains, setCaptains] = useState({});
+  const [tier2Mechanisms, setTier2Mechanisms] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -19,14 +19,13 @@ export default function KnockoutPreferences({ player, teamsByName = {} }) {
     async function fetchData() {
       setLoading(true);
       setError('');
-      const [knockoutResult, squadResult, configResult] = await Promise.all([
-        getKnockoutTeams(pin),
+      const [koAllocResult, squadResult] = await Promise.all([
+        getKnockoutAllocations(name, pin),
         getSquads(),
-        getConfig(),
       ]);
 
-      if (!knockoutResult.ok) {
-        setError(knockoutResult.error ?? 'Failed to load knockout teams.');
+      if (!koAllocResult.ok) {
+        setError(koAllocResult.error ?? 'Failed to load your knockout allocations.');
         setLoading(false);
         return;
       }
@@ -36,73 +35,41 @@ export default function KnockoutPreferences({ player, teamsByName = {} }) {
         return;
       }
 
-      const fetchedTeams = knockoutResult.data?.teams ?? [];
-      setTeams(fetchedTeams);
+      const allocs = koAllocResult.data?.knockoutAllocations ?? [];
+      const sorted = [...allocs].sort((a, b) => (a['Tier'] ?? 99) - (b['Tier'] ?? 99));
+      setAllocations(sorted);
+      setSquads(squadResult.data ?? {});
 
-      if (configResult.ok) {
-        setBudget(configResult.data?.knockoutBudget ?? 1000);
-      }
-
-      // Build flat list of all players from knockout teams, with prices
-      const knockoutTeamNames = new Set(fetchedTeams.map(t => t['Team Name']));
-      const allPlayers = [];
-      for (const [team, players] of Object.entries(squadResult.data ?? {})) {
-        if (knockoutTeamNames.has(team)) {
-          players.forEach(p => allPlayers.push({ ...p, team }));
-        }
-      }
-      // Sort by price descending, then name ascending
-      allPlayers.sort((a, b) =>
-        (b.playerPrice ?? 0) - (a.playerPrice ?? 0) || (a.playerName ?? '').localeCompare(b.playerName ?? '')
-      );
-      setKnockoutPlayers(allPlayers);
-
-      // Pre-populate from existing preferences
-      const existing = knockoutResult.data?.myPreferences ?? [];
-      if (existing.length > 0) {
-        const teamNames = existing.map(row => row['Team Purchased']).filter(Boolean);
-        setSelected(new Set(teamNames));
-        const existingCaptain = existing[0]?.['Captain Name'];
-        if (existingCaptain) setCaptain(existingCaptain);
+      const saved = koAllocResult.data?.knockoutPreferences ?? [];
+      if (saved.length > 0) {
+        const caps = {};
+        const mechs = {};
+        saved.forEach((row) => {
+          const team = row['Team Name'];
+          if (row['Captain Name']) caps[team] = row['Captain Name'];
+          const mechRaw = row['2 Mechanism'] ?? row['Tier 2 Mechanism'];
+          if (mechRaw) {
+            const lower = mechRaw.toLowerCase();
+            mechs[team] = lower.includes('conceded') ? 'conceded'
+              : lower.includes('scored') ? 'scored'
+              : mechRaw;
+          }
+        });
+        setCaptains(caps);
+        setTier2Mechanisms(mechs);
       }
 
       setLoading(false);
     }
     fetchData();
-  }, [pin]);
+  }, [pin, name]);
 
-  // Captain's individual price
-  const captainPrice = useMemo(() => {
-    const p = knockoutPlayers.find(p => p.playerName === captain);
-    return p?.playerPrice ?? 0;
-  }, [captain, knockoutPlayers]);
+  function handleCaptainChange(teamName, value) {
+    setCaptains((prev) => ({ ...prev, [teamName]: value }));
+  }
 
-  // Total spend = team costs + captain price
-  const teamSpend = useMemo(() =>
-    teams.filter(t => selected.has(t['Team Name'])).reduce((sum, t) => sum + (t['Price'] ?? 0), 0),
-  [teams, selected]);
-
-  const totalSpend = teamSpend + captainPrice;
-  const remaining = budget - totalSpend;
-  const overBudget = totalSpend > budget;
-
-  function toggleTeam(teamName, price) {
-    if (submitted) return;
-    setSelected(prev => {
-      const next = new Set(prev);
-      if (next.has(teamName)) {
-        next.delete(teamName);
-      } else {
-        const newSpend = totalSpend + price;
-        if (newSpend > budget) {
-          setError(`Adding ${teamName} would exceed your budget of ${budget} coins.`);
-          return prev;
-        }
-        next.add(teamName);
-      }
-      setError('');
-      return next;
-    });
+  function handleMechanismChange(teamName, value) {
+    setTier2Mechanisms((prev) => ({ ...prev, [teamName]: value }));
   }
 
   async function handleSubmit(e) {
@@ -110,157 +77,137 @@ export default function KnockoutPreferences({ player, teamsByName = {} }) {
     setError('');
     setSuccess('');
 
-    if (selected.size === 0) {
-      setError('Please select at least one team.');
-      return;
-    }
-    if (!captain) {
-      setError('Please select a captain.');
-      return;
-    }
-    if (overBudget) {
-      setError('You have exceeded your budget. Please deselect some teams or choose a cheaper captain.');
-      return;
+    for (const alloc of allocations) {
+      const team = alloc['Team Name'];
+      if (!captains[team]) {
+        setError(`Please select a captain for ${team}.`);
+        return;
+      }
+      if (Number(alloc['Tier']) === 2 && !tier2Mechanisms[team]) {
+        setError(`Please select a scoring mechanism for ${team} (Tier 2).`);
+        return;
+      }
     }
 
-    const teamsPurchased = Array.from(selected);
+    const captainsPayload = allocations.map((alloc) => {
+      const team = alloc['Team Name'];
+      const tier = Number(alloc['Tier']);
+      const entry = { team, tier, captain: captains[team] };
+      if (tier === 2) entry.tier2Mechanism = tier2Mechanisms[team];
+      return entry;
+    });
 
     setSubmitting(true);
-    const result = await submitKnockoutPreferences(name, pin, teamsPurchased, captain);
+    const result = await submitKnockoutPreferences(name, pin, captainsPayload);
     setSubmitting(false);
 
     if (result.ok) {
-      setSuccess(
-        result.data?.message ??
-          `Preferences saved! Total spend: ${result.data?.totalSpend ?? totalSpend} coins.`
-      );
+      setSuccess(result.data?.message ?? 'Knockout preferences saved successfully!');
       setSubmitted(true);
     } else {
       setError(result.error ?? 'Failed to save preferences. Please try again.');
     }
   }
 
-  if (loading) return <div className="loading">Loading knockout preferences…</div>;
-
-  const fillPct = Math.min(100, (totalSpend / budget) * 100);
-
-  // Group knockoutPlayers by team for the captain <optgroup> selector
-  const playersByTeam = knockoutPlayers.reduce((acc, p) => {
-    (acc[p.team] ??= []).push(p);
-    return acc;
-  }, {});
+  if (loading) return <div className="loading">Loading your knockout preferences…</div>;
 
   return (
     <div className="card">
-      <h2 className="card-title">🏆 Knockout Stage Auction</h2>
-      <p style={{ marginBottom: '1rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-        Use your coin budget to buy knockout teams and select a captain from any team still in the tournament.
-        Teams and captains are priced individually — both cost coins from your shared budget.
+      <h2 className="card-title">🏆 Knockout Stage Preferences</h2>
+      <p style={{ marginBottom: '1.25rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+        Select a captain for each of your allocated knockout teams. Your captain's goals will earn bonus points.
       </p>
 
       {error && <div className="error">{error}</div>}
       {success && <div className="success">{success}</div>}
 
-      {/* Budget bar */}
-      <div className="budget-bar-wrap">
-        <div className="budget-bar-labels">
-          <span>
-            Spent: <strong>{totalSpend}</strong> / {budget} coins
-            {(teamSpend > 0 || captainPrice > 0) && (
-              <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginLeft: '0.5rem' }}>
-                (teams: {teamSpend}{captainPrice > 0 ? ` + captain: ${captainPrice}` : ''})
-              </span>
-            )}
-          </span>
-          <span style={{ color: overBudget ? 'var(--danger)' : 'var(--green)' }}>
-            {overBudget ? `⚠ ${Math.abs(remaining)} over budget` : `${remaining} remaining`}
-          </span>
-        </div>
-        <div className="budget-bar-track">
-          <div
-            className={`budget-bar-fill${overBudget ? ' over-budget' : ''}`}
-            style={{ width: `${fillPct}%` }}
-          />
-        </div>
-      </div>
-
       <form onSubmit={handleSubmit} noValidate>
-        {/* Team grid */}
-        <div className="section-title">Select Teams</div>
-        {teams.length === 0 && (
-          <div className="empty-state">No knockout teams available yet.</div>
-        )}
-        <div className="knockout-teams-grid">
-          {teams.map(t => {
-            const teamName = t['Team Name'];
-            const price = t['Price'] ?? 0;
-            const isSelected = selected.has(teamName);
-            const wouldExceed = !isSelected && totalSpend + price > budget;
+        {allocations.map((alloc) => {
+          const team = alloc['Team Name'];
+          const tier = Number(alloc['Tier']);
+          const players = squads[team] ?? [];
+          const tierClass = `badge badge-tier-${tier}`;
+          const isDisabled = submitting || submitted;
 
-            return (
-              <div
-                key={teamName}
-                className={`knockout-team-card${isSelected ? ' selected' : ''}${wouldExceed ? ' disabled' : ''}`}
-                onClick={() => !wouldExceed && !submitted && toggleTeam(teamName, price)}
-                role="checkbox"
-                aria-checked={isSelected}
-                tabIndex={submitted ? -1 : 0}
-                onKeyDown={e => {
-                  if ((e.key === 'Enter' || e.key === ' ') && !wouldExceed && !submitted) {
-                    e.preventDefault();
-                    toggleTeam(teamName, price);
-                  }
-                }}
-                style={{ opacity: wouldExceed && !isSelected ? 0.45 : 1, cursor: submitted ? 'default' : 'pointer' }}
-              >
-                <div className="knockout-team-flag">
-                  <Flag value={teamsByName[teamName]?.['Flag Emoji']} style={{ width: '2em' }} />
-                </div>
-                <div className="knockout-team-name">{teamName}</div>
-                <div className="knockout-team-price">{price} coins</div>
+          return (
+            <div className="team-section" key={team}>
+              <div className="team-section-header">
+                <span className="team-section-name">
+                  <Flag value={teamsByName[team]?.['Flag Emoji']} />
+                  {team}
+                </span>
+                <span className={tierClass}>Tier {tier}</span>
               </div>
-            );
-          })}
-        </div>
 
-        {/* Captain selector — all players from all knockout teams, grouped by team */}
-        <div className="form-group" style={{ marginTop: '1.25rem' }}>
-          <label htmlFor="knockout-captain">
-            Captain
-            {captain && captainPrice > 0 && (
-              <span className="captain-price-badge">{captainPrice} coins</span>
-            )}
-          </label>
-          <select
-            id="knockout-captain"
-            value={captain}
-            onChange={e => setCaptain(e.target.value)}
+              <div className="form-group" style={{ marginBottom: tier === 2 ? '0.75rem' : 0 }}>
+                <label htmlFor={`ko-captain-${team}`}>Captain</label>
+                <select
+                  id={`ko-captain-${team}`}
+                  value={captains[team] ?? ''}
+                  onChange={(e) => handleCaptainChange(team, e.target.value)}
+                  disabled={isDisabled}
+                  required
+                >
+                  <option value="">— Select a player —</option>
+                  {players.map((p) => (
+                    <option key={p.playerName} value={p.playerName}>
+                      {p.shirtNumber ? `${p.shirtNumber}. ` : ''}{p.playerName}
+                      {p.position ? ` (${p.position})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {tier === 2 && (
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Tier 2 Scoring Mechanism</label>
+                  <div className="radio-group">
+                    <label className="radio-option">
+                      <input
+                        type="radio"
+                        name={`ko-mechanism-${team}`}
+                        value="scored"
+                        checked={tier2Mechanisms[team] === 'scored'}
+                        onChange={() => handleMechanismChange(team, 'scored')}
+                        disabled={isDisabled}
+                      />
+                      <span>⚡ Goals Scored</span>
+                    </label>
+                    <label className="radio-option">
+                      <input
+                        type="radio"
+                        name={`ko-mechanism-${team}`}
+                        value="conceded"
+                        checked={tier2Mechanisms[team] === 'conceded'}
+                        onChange={() => handleMechanismChange(team, 'conceded')}
+                        disabled={isDisabled}
+                      />
+                      <span>🛡 Goals Conceded</span>
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {allocations.length === 0 && (
+          <div className="empty-state">No knockout teams have been allocated to you yet.</div>
+        )}
+
+        {allocations.length > 0 && (
+          <button
+            type="submit"
+            className="btn btn-primary"
             disabled={submitting || submitted}
-            required
+            style={{ marginTop: '0.5rem' }}
           >
-            <option value="">— Select a captain from any knockout team —</option>
-            {Object.entries(playersByTeam).map(([team, players]) => (
-              <optgroup key={team} label={team}>
-                {players.map(p => (
-                  <option key={p.playerName} value={p.playerName}>
-                    {p.shirtNumber ? `${p.shirtNumber}. ` : ''}{p.playerName}
-                    {p.position ? ` (${p.position})` : ''} — {p.playerPrice ?? 0} coins
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-        </div>
-
-        <button
-          type="submit"
-          className="btn btn-primary"
-          disabled={submitting || submitted || selected.size === 0 || !captain || overBudget}
-          style={{ marginTop: '0.5rem' }}
-        >
-          {submitted ? '✓ Preferences Saved' : submitting ? 'Saving…' : 'Save Preferences'}
-        </button>
+            {submitted ? '✓ Preferences Saved' : submitting ? 'Saving…' : 'Save Preferences'}
+          </button>
+        )}
       </form>
+
+      <ScoringRules />
     </div>
   );
 }

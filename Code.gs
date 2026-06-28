@@ -18,7 +18,6 @@
  *                   │ KnockoutPrefsClose   │ ISO date │
  *                   │ KnockoutScoringOpen  │ ISO date │
  *                   │ KnockoutScoringClose │ ISO date │
- *                   │ KnockoutBudget       │ 1000     │
  *
  * Teams             │ Team Name │ FIFA Ranking │ Tier │ Flag Emoji │ Group
  *
@@ -32,11 +31,13 @@
  *                   One row per allocated team per player (up to 3 rows per player).
  *                   "Tier 2 Mechanism" is "scored" or "conceded"; blank for tiers 1 & 3.
  *
- * KnockoutTeams     │ Team Name │ Flag Emoji │ Price
+ * KnockoutTeams     │ Team Name │ Flag Emoji
  *
- * KnockoutPreferences │ Player ID │ Player Name │ Team Purchased │ Price Paid │ Captain Name │ Captain Price Paid │ Total Spend
- *                     One row per team purchased per player.
- *                     Captain Name, Captain Price Paid and Total Spend are repeated on every row for the player.
+ * KnockoutAllocations │ Player ID │ Player Name │ Team Name │ Tier
+ *                     One row per allocated knockout team per player. Mirrors Allocations.
+ *
+ * KnockoutPreferences │ Player ID │ Player Name │ Team Name │ Tier │ Captain Name │ 2 Mechanism
+ *                     One row per allocated knockout team per player. Mirrors GroupPreferences.
  *
  * Matches           │ Match ID │ Date │ Stage │ Group │ Home Team │ Away Team │ Home Score │ Away Score
  *                   Stage values: "Group Stage" │ "Round of 16" │ "Quarterfinal" │ "Semifinal" │ "Final"
@@ -231,7 +232,6 @@ function handleGetConfig() {
     knockoutPrefsClose:   config['KnockoutPrefsClose']   || null,
     knockoutScoringOpen:  config['KnockoutScoringOpen']  || null,
     knockoutScoringClose: config['KnockoutScoringClose'] || null,
-    knockoutBudget:       Number(config['KnockoutBudget']) || 1000,
     currentPhase:         getCurrentPhase(config)
   });
 }
@@ -339,11 +339,12 @@ function handleGetPlayerPicks(playerName) {
   }
 
   return ok({
-    player:               { 'Player ID': playerId, Name: player['Name'] },
-    allocations:          allocs,
-    groupPreferences:     getGroupPrefsForPlayer(playerId),
-    knockoutPreferences:  getKnockoutPrefsForPlayer(playerId),
-    pointsActivity:       getPointsActivityForPlayer(playerId)
+    player:                { 'Player ID': playerId, Name: player['Name'] },
+    allocations:           allocs,
+    groupPreferences:      getGroupPrefsForPlayer(playerId),
+    knockoutAllocations:   getKnockoutAllocsForPlayer(playerId),
+    knockoutPreferences:   getKnockoutPrefsForPlayer(playerId),
+    pointsActivity:        getPointsActivityForPlayer(playerId)
   });
 }
 
@@ -405,21 +406,26 @@ function handleGetAllocations(name, pin) {
 }
 
 /**
- * Returns available knockout teams with prices, and optionally the player's existing picks.
- * KnockoutTeams columns: Team Name | Flag Emoji | Price
+ * Returns the requesting player's knockout allocations plus any saved knockout preferences.
+ * Requires both name AND pin — validates they match the same player row.
+ * KnockoutAllocations columns: Player ID | Player Name | Team Name | Tier
  */
-function handleGetKnockoutTeams(pin) {
-  var teams = sheetToObjects(getSheet('KnockoutTeams'));
-
-  var myPreferences = null;
-  if (pin) {
-    var player = findPlayerByPin(pin);
-    if (player) {
-      myPreferences = getKnockoutPrefsForPlayer(player['Player ID']);
-    }
+function handleGetKnockoutAllocations(name, pin) {
+  if (!name) return fail('Name is required', 400);
+  if (!pin)  return fail('PIN is required', 400);
+  var player = findPlayerByName(name);
+  if (!player || String(player['PIN']) !== String(pin)) {
+    return fail('Invalid name or PIN', 401);
   }
 
-  return ok({ teams: teams, myPreferences: myPreferences });
+  var playerId = player['Player ID'];
+  var allocs = getKnockoutAllocsForPlayer(playerId);
+
+  return ok({
+    player:               { 'Player ID': playerId, Name: player['Name'] },
+    knockoutAllocations:  allocs,
+    knockoutPreferences:  getKnockoutPrefsForPlayer(playerId)
+  });
 }
 
 // ─── Preference Lookup Helpers ───────────────────────────────────────────────
@@ -446,8 +452,29 @@ function getGroupPrefsForPlayer(playerId) {
 }
 
 /**
+ * Returns all KnockoutAllocations rows for a player as an array.
+ * Each row: { Player ID, Player Name, Team Name, Tier }
+ */
+function getKnockoutAllocsForPlayer(playerId) {
+  var sheet = getSheet('KnockoutAllocations');
+  var data  = sheet.getDataRange().getValues();
+  if (data.length < 2) return [];
+  var headers = data[0];
+  var pidCol  = headers.indexOf('Player ID');
+  var rows = [];
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][pidCol]) === String(playerId)) {
+      var row = {};
+      headers.forEach(function (h, j) { row[h] = data[i][j]; });
+      rows.push(row);
+    }
+  }
+  return rows;
+}
+
+/**
  * Returns all KnockoutPreferences rows for a player as an array.
- * Each row: { Player ID, Player Name, Team Purchased, Price Paid, Captain Name, Captain Price Paid, Total Spend }
+ * Each row: { Player ID, Player Name, Team Name, Tier, Captain Name, 2 Mechanism }
  */
 function getKnockoutPrefsForPlayer(playerId) {
   var sheet = getSheet('KnockoutPreferences');
@@ -591,22 +618,27 @@ function handleSubmitGroupPreferences(body) {
  * POST submitKnockoutPreferences
  *
  * Body: {
+ *   name: "Jane Smith",
  *   pin: "1234",
- *   teamsPurchased: ["France", "Brazil"],
- *   captain: "Mbappe"
+ *   captains: [
+ *     { team: "France",   tier: 1, captain: "Mbappe"   },
+ *     { team: "Brazil",   tier: 2, captain: "Vinicius", tier2Mechanism: "scored" },
+ *     { team: "Spain",    tier: 3, captain: "Yamal"    }
+ *   ]
  * }
  *
- * Writes one row per purchased team to KnockoutPreferences:
- *   Player ID | Player Name | Team Purchased | Price Paid | Captain Name | Total Spend
+ * Mirrors submitGroupPreferences but writes to KnockoutPreferences using
+ * KnockoutAllocations as the source of truth for allocated teams.
  *
- * Captain Name and Total Spend are repeated on every row for the player.
+ * Writes one row per entry to KnockoutPreferences:
+ *   Player ID | Player Name | Team Name | Tier | Captain Name | 2 Mechanism
+ *
  * Re-submissions overwrite all previous rows for this player.
  */
 function handleSubmitKnockoutPreferences(body) {
-  var name           = body.name    ? String(body.name).trim()    : '';
-  var pin            = body.pin     ? String(body.pin).trim()     : '';
-  var teamsPurchased = body.teamsPurchased;
-  var captain        = body.captain ? String(body.captain).trim() : '';
+  var name     = body.name     ? String(body.name).trim()     : '';
+  var pin      = body.pin      ? String(body.pin).trim()      : '';
+  var captains = body.captains;
 
   if (!name) return fail('Name is required', 400);
   if (!pin)  return fail('PIN is required', 400);
@@ -616,112 +648,45 @@ function handleSubmitKnockoutPreferences(body) {
 
   var config = readConfig();
   if (!isPhaseOpen('knockout_preferences', config)) {
-    return fail('Knockout preferences are currently closed', 403);
+    return fail('Knockout stage preferences are currently closed', 403);
   }
 
-  if (!Array.isArray(teamsPurchased) || teamsPurchased.length === 0) {
-    return fail('teamsPurchased must be a non-empty array of team names');
+  if (!Array.isArray(captains) || captains.length === 0) {
+    return fail('captains must be a non-empty array');
   }
 
-  if (!captain) return fail('captain is required');
-
-  // ── Build price map from KnockoutTeams ────────────────────────────────────
-  // Columns: Team Name | Flag Emoji | Price
-  var ktSheet  = getSheet('KnockoutTeams');
-  var ktData   = ktSheet.getDataRange().getValues();
-  if (ktData.length < 2) return fail('Knockout teams have not been configured yet');
-
-  var ktHeaders = ktData[0];
-  var ktNameCol  = ktHeaders.indexOf('Team Name');
-  var ktPriceCol = ktHeaders.indexOf('Price');
-
-  if (ktNameCol === -1)  return fail('KnockoutTeams sheet is missing a "Team Name" column');
-  if (ktPriceCol === -1) return fail('KnockoutTeams sheet is missing a "Price" column');
-
-  var priceMap = {};
-  for (var i = 1; i < ktData.length; i++) {
-    var tn = String(ktData[i][ktNameCol]);
-    if (tn) priceMap[tn] = Number(ktData[i][ktPriceCol]) || 0;
-  }
-
-  // All team names in this season's knockout round (used for captain validation)
-  var knockoutTeamNames = Object.keys(priceMap);
-
-  // ── Validate teams and calculate team spend ───────────────────────────────
-  var totalSpend = 0;
-  for (var t = 0; t < teamsPurchased.length; t++) {
-    var teamName = String(teamsPurchased[t]);
-    if (!(teamName in priceMap)) return fail('Unknown team: "' + teamName + '"');
-    totalSpend += priceMap[teamName];
-  }
-
-  // ── Validate captain and add their price to total spend ───────────────────
-  // Captain can be any player from any knockout team's squad (not limited to purchased teams).
-  // Each player's price is in column E (PlayerPrice) of the Squads sheet.
-  var squadsSheet = getSheet('Squads');
-  var squadsData  = squadsSheet.getDataRange().getValues();
-  var captainPrice = 0;
-
-  if (squadsData.length >= 2) {
-    var sqHeaders   = squadsData[0];
-    var sqTeamCol   = sqHeaders.indexOf('Team Name');
-    var sqPlayerCol = sqHeaders.indexOf('Player Name');
-    var sqPriceCol  = sqHeaders.indexOf('PlayerPrice');
-    var captainLower = captain.toLowerCase();
-    var captainValid = false;
-
-    if (sqTeamCol !== -1 && sqPlayerCol !== -1) {
-      for (var s = 1; s < squadsData.length; s++) {
-        if (knockoutTeamNames.indexOf(String(squadsData[s][sqTeamCol])) !== -1 &&
-            String(squadsData[s][sqPlayerCol]).toLowerCase() === captainLower) {
-          captainValid = true;
-          captainPrice = sqPriceCol !== -1 ? (Number(squadsData[s][sqPriceCol]) || 0) : 0;
-          break;
-        }
-      }
-      if (!captainValid) {
-        return fail('Captain must be a player from a knockout tournament team\'s squad');
-      }
+  for (var i = 0; i < captains.length; i++) {
+    var entry = captains[i];
+    if (!entry.team)    return fail('Each captain entry must include a "team" field');
+    if (!entry.captain) return fail('Each captain entry must include a "captain" field');
+    if (!entry.tier)    return fail('Each captain entry must include a "tier" field (1, 2, or 3)');
+    var tier2Mech = String(entry.tier2Mechanism || '');
+    if (Number(entry.tier) === 2 && tier2Mech !== 'scored' && tier2Mech !== 'conceded') {
+      return fail('tier2Mechanism must be "scored" or "conceded" for the Tier 2 entry');
     }
   }
-  // If Squads sheet is empty, skip the captain validation check.
 
-  totalSpend += captainPrice;
-
-  var budget = Number(config['KnockoutBudget']) || 1000;
-  if (totalSpend > budget) {
-    return fail(
-      'Total spend (' + totalSpend + ') exceeds your budget (' + budget + '). Please remove some teams or choose a cheaper captain.',
-      400
-    );
-  }
-
-  // ── Write to KnockoutPreferences ─────────────────────────────────────────
   var sheet      = getSheet('KnockoutPreferences');
   var playerId   = player['Player ID'];
   var playerName = player['Name'];
 
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['Player ID', 'Player Name', 'Team Purchased', 'Price Paid', 'Captain Name', 'Captain Price Paid', 'Total Spend']);
+    sheet.appendRow(['Player ID', 'Player Name', 'Team Name', 'Tier', 'Captain Name', '2 Mechanism']);
   }
 
-  // Delete all existing rows for this player, then batch-write fresh rows
   deleteRowsForPlayer(sheet, 'Player ID', playerId);
 
-  var newKoRows = [];
-  for (var r = 0; r < teamsPurchased.length; r++) {
-    var tName = String(teamsPurchased[r]);
-    newKoRows.push([playerId, playerName, tName, priceMap[tName], captain, captainPrice, totalSpend]);
+  var newRows = [];
+  for (var j = 0; j < captains.length; j++) {
+    var c = captains[j];
+    var tier2Mechanism = (Number(c.tier) === 2) ? String(c.tier2Mechanism || 'scored') : '';
+    newRows.push([playerId, playerName, c.team, c.tier, c.captain, tier2Mechanism]);
   }
-  if (newKoRows.length > 0) {
-    sheet.getRange(sheet.getLastRow() + 1, 1, newKoRows.length, newKoRows[0].length).setValues(newKoRows);
+  if (newRows.length > 0) {
+    sheet.getRange(sheet.getLastRow() + 1, 1, newRows.length, newRows[0].length).setValues(newRows);
   }
 
-  return ok({
-    message:         'Knockout preferences saved successfully',
-    totalSpend:      totalSpend,
-    remainingBudget: budget - totalSpend
-  });
+  return ok({ message: 'Knockout preferences saved successfully' });
 }
 
 // ─── Main Router ─────────────────────────────────────────────────────────────
@@ -758,8 +723,8 @@ function doGet(e) {
       case 'getPlayerNames':   return handleGetPlayerNames();
       case 'getAllAllocations': return handleGetAllAllocations();
       case 'getPlayerPicks':   return handleGetPlayerPicks(e.parameter.playerName || '');
-      case 'getAllocations':   return handleGetAllocations(e.parameter.name || '', pin);
-      case 'getKnockoutTeams': return handleGetKnockoutTeams(pin);
+      case 'getAllocations':          return handleGetAllocations(e.parameter.name || '', pin);
+      case 'getKnockoutAllocations': return handleGetKnockoutAllocations(e.parameter.name || '', pin);
       // ── Write actions (body arrives via ?payload=...) ─────────────────────
       case 'register':                  return handleRegister(body);
       case 'submitGroupPreferences':    return handleSubmitGroupPreferences(body);

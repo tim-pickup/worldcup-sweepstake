@@ -109,12 +109,13 @@ export function getAllocations(name, pin) {
 }
 
 /**
- * Returns the 16 knockout teams with prices.
- * If a PIN is supplied, also returns the player's existing knockout picks.
- * @param {string} [pin]
+ * Returns the authenticated player's knockout allocations + saved knockout preferences.
+ * Authentication is name + PIN — both must match the same player row.
+ * @param {string} name
+ * @param {string} pin
  */
-export function getKnockoutTeams(pin = '') {
-  return get('getKnockoutTeams', { pin });
+export function getKnockoutAllocations(name, pin) {
+  return get('getKnockoutAllocations', { name, pin });
 }
 
 // ─── Write endpoints ─────────────────────────────────────────────────────────
@@ -139,11 +140,12 @@ export function submitGroupPreferences(name, pin, captains) {
 }
 
 /**
- * Saves knockout stage team purchases and captain selection.
- * @param {string}   pin
- * @param {string[]} teamsPurchased  Array of team names
- * @param {string}   captain         Must be in one of the purchased teams' squads
+ * Saves knockout stage captain selections and Tier 2 mechanism choice.
+ * Mirrors submitGroupPreferences but for the knockout phase.
+ * @param {string} name
+ * @param {string} pin
+ * @param {Array<{ team: string, tier: number, captain: string, tier2Mechanism?: "scored"|"conceded" }>} captains
  */
-export function submitKnockoutPreferences(name, pin, teamsPurchased, captain) {
-  return post('submitKnockoutPreferences', { name, pin, teamsPurchased, captain });
+export function submitKnockoutPreferences(name, pin, captains) {
+  return post('submitKnockoutPreferences', { name, pin, captains });
 }

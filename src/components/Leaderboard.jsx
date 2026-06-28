@@ -174,17 +174,20 @@ function ExpandedPicks({ playerName, teamsByName, matches }) {
   if (error)   return <div style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{error}</div>;
   if (!picks)  return null;
 
-  const { allocations = [], groupPreferences = [], knockoutPreferences = [], pointsActivity = [] } = picks;
+  const {
+    allocations = [],
+    groupPreferences = [],
+    knockoutAllocations = [],
+    knockoutPreferences = [],
+    pointsActivity = [],
+  } = picks;
   const hasGroup    = allocations.length > 0;
-  const hasKnockout = knockoutPreferences.length > 0;
+  const hasKnockout = knockoutAllocations.length > 0;
   const hasActivity = pointsActivity.length > 0;
 
   if (!hasGroup && !hasKnockout && !hasActivity) {
     return <div style={{ color: 'var(--text-muted)', fontSize: '0.82rem', fontStyle: 'italic' }}>No picks submitted yet.</div>;
   }
-
-  const koCapt  = knockoutPreferences[0]?.['Captain Name'];
-  const koTotal = knockoutPreferences[0]?.['Total Spend'];
 
   return (
     <div className="picks-row-inner">
@@ -208,20 +211,19 @@ function ExpandedPicks({ playerName, teamsByName, matches }) {
       )}
       {hasKnockout && (
         <div>
-          <div className="picks-section-label">
-            🏆 Knockout — {koTotal != null ? `${koTotal} coins spent` : ''}
-            {koCapt ? ` · 👑 ${koCapt}` : ''}
-          </div>
-          <div className="ko-picks-grid">
-            {knockoutPreferences.map(row => (
-              <span key={row['Team Purchased']} className="ko-pick-chip">
-                <Flag value={teamsByName?.[row['Team Purchased']]?.['Flag Emoji']} />
-                {row['Team Purchased']}
-                <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
-                  {row['Price Paid'] != null ? ` · ${row['Price Paid']}c` : ''}
-                </span>
-              </span>
-            ))}
+          <div className="picks-section-label">🏆 Knockout Stage</div>
+          <div className="team-picks-grid">
+            {knockoutAllocations
+              .slice()
+              .sort((a, b) => (a['Tier'] ?? 0) - (b['Tier'] ?? 0))
+              .map(alloc => (
+                <TeamPickCard
+                  key={alloc['Team Name']}
+                  alloc={alloc}
+                  groupPrefs={knockoutPreferences}
+                  teamsByName={teamsByName}
+                />
+              ))}
           </div>
         </div>
       )}

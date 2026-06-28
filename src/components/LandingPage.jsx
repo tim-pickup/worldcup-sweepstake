@@ -214,10 +214,17 @@ export default function LandingPage({ config, onRegister }) {
 
           {/* Knockout Stage */}
           <div className="landing-phase-label">🏆 Knockout Stage</div>
-          <div className="landing-tbc-card" style={{ marginBottom: '1.75rem' }}>
-            <div className="landing-tbc-icon">⏳</div>
-            <div className="landing-tbc-heading">To Be Confirmed</div>
-            <p className="landing-tbc-sub">Knockout stage rules will be announced before the group stage ends.</p>
+          <p className="landing-section-sub" style={{ marginBottom: '1rem' }}>
+            After the group stage, you are allocated knockout teams — one from each tier. Pick a captain for each team to earn bonus points as they progress through the tournament.
+          </p>
+          <div className="landing-how-grid" style={{ marginBottom: '1.75rem' }}>
+            {GROUP_TIERS.map(({ tier, color, icon, title, desc }) => (
+              <div key={`ko-${tier}`} className="landing-how-card" style={{ '--card-accent': color }}>
+                <div className="landing-how-icon">{icon}</div>
+                <div className="landing-how-title">{title}</div>
+                <p className="landing-how-desc">{desc}</p>
+              </div>
+            ))}
           </div>
 
           {/* Scoring */}

@@ -102,7 +102,7 @@ const TIMELINE_STEPS = [
   { icon: '🎲', title: 'Group Draw',        desc: 'Teams are randomly drawn and allocated live — three teams per player, one from each tier.', accent: 'var(--gold)' },
   { icon: '⚽', title: 'Group Picks Open',   desc: 'Set your captain for each team and choose your Tier 2 scoring mechanism before the deadline.', accent: '#fb923c' },
   { icon: '🌍', title: 'Group Stage Begins', desc: 'The tournament kicks off. Points rack up from goals, cards, and captain bonuses.', accent: 'var(--green)' },
-  { icon: '🏆', title: 'Knockout Auction',   desc: 'Spend your coin budget on knockout-stage teams. Every match win advances your score.', accent: 'var(--info)' },
+  { icon: '🏆', title: 'Knockout Picks',     desc: 'Pick captains for your allocated knockout teams. Goals earn you points as teams progress.', accent: 'var(--info)' },
   { icon: '🥇', title: 'Final & Champion',   desc: 'The champion is crowned. Check the leaderboard to see who wins the sweepstake.', accent: '#a78bfa' },
 ];
 

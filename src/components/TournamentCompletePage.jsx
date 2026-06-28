@@ -263,35 +263,55 @@ function FinaleExpandedPicks({ playerName, teamsByName }) {
   if (loading) return <div style={{ padding: '1rem', color: 'var(--text-muted)' }}>Loading picks…</div>;
   if (!picks)  return null;
 
-  const { allocations = [], groupPreferences = [], knockoutPreferences = [] } = picks;
-  const hasKnockout = knockoutPreferences.length > 0;
+  const {
+    allocations = [],
+    groupPreferences = [],
+    knockoutAllocations = [],
+    knockoutPreferences = [],
+  } = picks;
+  const hasKnockout = knockoutAllocations.length > 0;
   const hasGroup    = allocations.length > 0;
 
   if (!hasGroup && !hasKnockout) {
     return <div style={{ padding: '1rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No picks submitted.</div>;
   }
 
-  const koCapt  = knockoutPreferences[0]?.['Captain Name'];
-  const koTotal = knockoutPreferences[0]?.['Total Spend'];
-
   return (
     <div className="picks-row-inner" style={{ padding: '0.75rem 0' }}>
       {hasKnockout && (
         <div>
-          <div className="picks-section-label">
-            🏆 Knockout — {koTotal != null ? `${koTotal} coins spent` : ''}
-            {koCapt ? ` · 👑 ${koCapt}` : ''}
-          </div>
-          <div className="ko-picks-grid">
-            {knockoutPreferences.map(row => (
-              <span key={row['Team Purchased']} className="ko-pick-chip">
-                <Flag value={teamsByName?.[row['Team Purchased']]?.['Flag Emoji']} />
-                {row['Team Purchased']}
-                <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
-                  {row['Price Paid'] != null ? ` · ${row['Price Paid']}c` : ''}
-                </span>
-              </span>
-            ))}
+          <div className="picks-section-label">🏆 Knockout Stage</div>
+          <div className="team-picks-grid">
+            {knockoutAllocations
+              .slice()
+              .sort((a, b) => (a['Tier'] ?? 0) - (b['Tier'] ?? 0))
+              .map(alloc => {
+                const teamName = alloc['Team Name'];
+                const tier     = alloc['Tier'] ?? alloc['tier'];
+                const pref     = knockoutPreferences?.find(p => p['Team Name'] === teamName);
+                const captain  = pref?.['Captain Name'];
+                const mechanism = pref?.['2 Mechanism'] ?? pref?.['Tier 2 Mechanism'];
+                return (
+                  <div key={teamName} className={`team-pick-card tier-${tier}`}>
+                    <div className="team-pick-name">
+                      <Flag value={teamsByName?.[teamName]?.['Flag Emoji']} />
+                      {teamName}
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', marginBottom: '0.3rem', flexWrap: 'wrap' }}>
+                      <span className={`badge badge-tier-${tier}`}>Tier {tier}</span>
+                      {Number(tier) === 2 && mechanism && (
+                        <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                          ⚡ {mechanism === 'scored' ? 'Goals Scored' : 'Goals Conceded'}
+                        </span>
+                      )}
+                    </div>
+                    {captain
+                      ? <div className="team-pick-captain">👑 {captain}</div>
+                      : <div className="team-pick-detail" style={{ fontStyle: 'italic' }}>No captain set</div>
+                    }
+                  </div>
+                );
+              })}
           </div>
         </div>
       )}

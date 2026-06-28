@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
-import { getAllocations, getKnockoutTeams } from '../api.js';
+import { getAllocations, getKnockoutAllocations } from '../api.js';
 import Flag from './Flag.jsx';
 
 const TIER_LABELS = { 1: 'Tier 1', 2: 'Tier 2', 3: 'Tier 3' };
 
 const PHASE_CONTEXT = {
-  group_scoring:      'Group stage is underway — your picks are locked in.',
-  knockout_preferences: 'Group stage complete. Knockout auction is now open.',
-  knockout_scoring:   'Knockout stage is underway — your picks are locked in.',
-  complete:           'The tournament is complete. Final picks below.',
+  group_scoring:        'Group stage is underway — your picks are locked in.',
+  knockout_preferences: 'Group stage complete. Submit your knockout picks.',
+  knockout_scoring:     'Knockout stage is underway — your picks are locked in.',
+  complete:             'The tournament is complete. Final picks below.',
 };
 
 function useCountdown(target) {
@@ -38,12 +38,12 @@ function useCountdown(target) {
   return parts;
 }
 
-function TeamCard({ alloc, groupPrefs, teamsByName }) {
+function TeamCard({ alloc, prefs, teamsByName }) {
   const tier = alloc['Tier'];
   const teamName = alloc['Team Name'];
-  const pref = groupPrefs?.find(p => p['Team Name'] === teamName);
+  const pref = prefs?.find(p => p['Team Name'] === teamName);
   const captain = pref?.['Captain Name'];
-  const mechanism = pref?.['Tier 2 Mechanism'] ?? pref?.['2 Mechanism'];
+  const mechanism = pref?.['2 Mechanism'] ?? pref?.['Tier 2 Mechanism'];
 
   return (
     <div className={`team-pick-card tier-${tier}`}>
@@ -70,6 +70,7 @@ function TeamCard({ alloc, groupPrefs, teamsByName }) {
 export default function LockedPicks({ player, phase, config, teamsByName = {} }) {
   const [allocations, setAllocations] = useState([]);
   const [groupPrefs, setGroupPrefs] = useState([]);
+  const [koAllocations, setKoAllocations] = useState([]);
   const [koPrefs, setKoPrefs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -80,7 +81,7 @@ export default function LockedPicks({ player, phase, config, teamsByName = {} })
       setError('');
       const [allocResult, koResult] = await Promise.all([
         getAllocations(player.name, player.pin),
-        getKnockoutTeams(player.pin),
+        getKnockoutAllocations(player.name, player.pin),
       ]);
 
       if (!allocResult.ok) {
@@ -93,7 +94,8 @@ export default function LockedPicks({ player, phase, config, teamsByName = {} })
       setGroupPrefs(allocResult.data?.groupPreferences ?? []);
 
       if (koResult.ok) {
-        setKoPrefs(koResult.data?.myPreferences ?? []);
+        setKoAllocations(koResult.data?.knockoutAllocations ?? []);
+        setKoPrefs(koResult.data?.knockoutPreferences ?? []);
       }
       setLoading(false);
     }
@@ -109,9 +111,8 @@ export default function LockedPicks({ player, phase, config, teamsByName = {} })
   const contextMsg = PHASE_CONTEXT[phase] ?? 'Your picks are now locked.';
   const isPreOpen = !(phase in PHASE_CONTEXT) && groupPrefsOpenTarget && !preOpenCountdown.expired;
   const sortedAllocs = allocations.slice().sort((a, b) => (a['Tier'] ?? 0) - (b['Tier'] ?? 0));
-  const hasKo  = koPrefs.length > 0;
-  const koCapt = koPrefs[0]?.['Captain Name'];
-  const koSpend = koPrefs[0]?.['Total Spend'];
+  const sortedKoAllocs = koAllocations.slice().sort((a, b) => (a['Tier'] ?? 0) - (b['Tier'] ?? 0));
+  const hasKo = koAllocations.length > 0;
 
   return (
     <div>
@@ -150,7 +151,7 @@ export default function LockedPicks({ player, phase, config, teamsByName = {} })
               <TeamCard
                 key={alloc['Team Name']}
                 alloc={alloc}
-                groupPrefs={groupPrefs}
+                prefs={groupPrefs}
                 teamsByName={teamsByName}
               />
             ))}
@@ -163,38 +164,33 @@ export default function LockedPicks({ player, phase, config, teamsByName = {} })
         )}
       </div>
 
-      {/* Knockout Stage — only show once phase is past group_preferences */}
+      {/* Knockout Stage — only show once phase is past group_scoring */}
       {phase !== 'group_scoring' && (
         <div className="card">
           <h2 className="card-title">🏆 Knockout Picks</h2>
           {!hasKo ? (
             <div className="empty-state" style={{ fontStyle: 'italic' }}>
               {phase === 'knockout_preferences'
-                ? 'You haven\'t submitted knockout picks yet — the auction is still open!'
-                : 'No knockout preferences were submitted.'}
+                ? 'Your knockout allocations aren\'t set yet — check back once the picks window opens!'
+                : 'No knockout allocations found.'}
             </div>
           ) : (
             <>
-              {(koCapt || koSpend != null) && (
-                <div className="info-banner" style={{ marginBottom: '0.85rem' }}>
-                  {koCapt && <>👑 Captain: <strong>{koCapt}</strong></>}
-                  {koCapt && koSpend != null && ' · '}
-                  {koSpend != null && <>💰 {koSpend} coins spent</>}
-                </div>
-              )}
-              <div className="ko-picks-grid">
-                {koPrefs.map(row => (
-                  <span key={row['Team Purchased']} className="ko-pick-chip">
-                    <Flag value={teamsByName[row['Team Purchased']]?.['Flag Emoji']} />
-                    {row['Team Purchased']}
-                    {row['Price Paid'] != null && (
-                      <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
-                        · {row['Price Paid']}c
-                      </span>
-                    )}
-                  </span>
+              <div className="team-picks-grid">
+                {sortedKoAllocs.map(alloc => (
+                  <TeamCard
+                    key={alloc['Team Name']}
+                    alloc={alloc}
+                    prefs={koPrefs}
+                    teamsByName={teamsByName}
+                  />
                 ))}
               </div>
+              {koPrefs.length === 0 && (
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginTop: '0.75rem', fontStyle: 'italic' }}>
+                  No knockout preferences submitted yet.
+                </p>
+              )}
             </>
           )}
         </div>

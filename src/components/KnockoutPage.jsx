@@ -56,8 +56,8 @@ function KoCountdown({ target, large }) {
   );
 }
 
-/* ── Sub-view 1: Group Stage Over, Waiting for Auction ─────────────────────── */
-function PreAuctionView({ config, teamsByName }) {
+/* ── Sub-view 1: Group Stage Over, Waiting for Knockout Picks ──────────────── */
+function PrePicksView({ config, teamsByName }) {
   return (
     <div className="ko-page">
       {/* Background glows */}
@@ -71,18 +71,18 @@ function PreAuctionView({ config, teamsByName }) {
         </div>
         <h1 className="ko-title">
           The Group Stage Is Over.<br />
-          <span className="ko-title-accent-purple">The Auction Opens Soon.</span>
+          <span className="ko-title-accent-purple">Knockout Picks Open Soon.</span>
         </h1>
         <p className="ko-subtitle">
           The dust has settled on the group stage. Study the standings below —
-          then get ready to bid on knockout teams when the auction opens.
+          your knockout team allocations and picks window are coming soon.
         </p>
 
         <div className="ko-countdown-card ko-countdown-card-purple">
-          <div className="ko-countdown-label">🔨 Knockout Auction Opens In</div>
+          <div className="ko-countdown-label">🏆 Knockout Picks Open In</div>
           <KoCountdown target={config?.knockoutPrefsOpen} large />
           <div className="ko-countdown-sub">
-            Spend your budget wisely — every coin counts in the knockout rounds
+            Pick your captains wisely — every goal counts in the knockout rounds
           </div>
         </div>
 
@@ -92,8 +92,8 @@ function PreAuctionView({ config, teamsByName }) {
             <div className="ko-stat-text">Knockout Stage</div>
           </div>
           <div className="ko-stat-chip">
-            <div className="ko-stat-icon">💰</div>
-            <div className="ko-stat-text">Auction Coming</div>
+            <div className="ko-stat-icon">📋</div>
+            <div className="ko-stat-text">Picks Coming</div>
           </div>
           <div className="ko-stat-chip">
             <div className="ko-stat-icon">⚡</div>
@@ -114,8 +114,8 @@ function PreAuctionView({ config, teamsByName }) {
   );
 }
 
-/* ── Sub-view 2: Auction Window Open ───────────────────────────────────────── */
-function AuctionOpenView({ config, player, onLogin, onViewPicks, teamsByName }) {
+/* ── Sub-view 2: Picks Window Open ─────────────────────────────────────────── */
+function PicksOpenView({ config, player, onLogin, onViewPicks, teamsByName }) {
   return (
     <div className="ko-page">
       <div className="ko-glow ko-glow-orange" />
@@ -124,19 +124,19 @@ function AuctionOpenView({ config, player, onLogin, onViewPicks, teamsByName }) 
       <div className="ko-hero ko-hero-auction">
         <div className="ko-eyebrow ko-eyebrow-danger">
           <span className="ko-eyebrow-dot ko-eyebrow-dot-danger" />
-          Knockout Auction Open
+          Knockout Picks Open
         </div>
         <h1 className="ko-title">
-          Place Your Bids.<br />
+          Submit Your Picks.<br />
           <span className="ko-title-accent-danger">The Knockout Begins.</span>
         </h1>
         <p className="ko-subtitle">
-          Spend your coin budget on the 16 remaining teams and pick your knockout captain.
-          Every match win earns you points — choose wisely.
+          Choose captains for your allocated knockout teams.
+          Every goal earns you points — choose wisely.
         </p>
 
         <div className="ko-deadline-wrap">
-          <div className="ko-deadline-label">⏰ Auction closes in</div>
+          <div className="ko-deadline-label">⏰ Picks window closes in</div>
           <KoCountdown target={config?.knockoutPrefsClose} large />
         </div>
 
@@ -150,7 +150,7 @@ function AuctionOpenView({ config, player, onLogin, onViewPicks, teamsByName }) 
               <button className="ko-cta-btn ko-cta-btn-primary" onClick={onLogin}>
                 Login to Submit Picks <span className="ko-cta-arrow">→</span>
               </button>
-              <p className="ko-cta-note">Log in with your name and PIN to enter the auction</p>
+              <p className="ko-cta-note">Log in with your name and PIN to submit your knockout picks</p>
             </>
           )}
         </div>
@@ -168,8 +168,8 @@ function AuctionOpenView({ config, player, onLogin, onViewPicks, teamsByName }) 
   );
 }
 
-/* ── Sub-view 3: Auction Closed, Waiting for Knockout Scoring ──────────────── */
-function AuctionClosedView({ config, teamsByName }) {
+/* ── Sub-view 3: Picks Closed, Waiting for Knockout Scoring ────────────────── */
+function PicksLockedView({ config, teamsByName }) {
   return (
     <div className="ko-page">
       <div className="ko-glow ko-glow-green" />
@@ -178,14 +178,14 @@ function AuctionClosedView({ config, teamsByName }) {
       <div className="ko-hero">
         <div className="ko-eyebrow ko-eyebrow-green">
           <span className="ko-eyebrow-dot ko-eyebrow-dot-green" />
-          Auction Closed · Picks Locked
+          Picks Locked
         </div>
         <h1 className="ko-title">
-          The Bids Are In.<br />
+          The Picks Are In.<br />
           <span className="ko-title-accent-green">Let The Knockouts Begin.</span>
         </h1>
         <p className="ko-subtitle">
-          Everyone's knockout picks are locked. Sit back and watch as the 16 remaining teams battle it out.
+          Everyone's knockout picks are locked. Sit back and watch as the remaining teams battle it out.
           The knockout stage is about to begin.
         </p>
 
@@ -228,16 +228,16 @@ function AuctionClosedView({ config, teamsByName }) {
 /* ── Main export ────────────────────────────────────────────────────────────── */
 export default function KnockoutPage({ config, player, teamsByName, onLogin, onViewPicks }) {
   const now = Date.now();
-  const auctionOpen   = config?.knockoutPrefsOpen  && now >= new Date(config.knockoutPrefsOpen).getTime();
-  const auctionClosed = config?.knockoutPrefsClose && now >= new Date(config.knockoutPrefsClose).getTime();
+  const picksOpen   = config?.knockoutPrefsOpen  && now >= new Date(config.knockoutPrefsOpen).getTime();
+  const picksClosed = config?.knockoutPrefsClose && now >= new Date(config.knockoutPrefsClose).getTime();
 
-  if (auctionClosed) {
-    return <AuctionClosedView config={config} teamsByName={teamsByName} />;
+  if (picksClosed) {
+    return <PicksLockedView config={config} teamsByName={teamsByName} />;
   }
 
-  if (auctionOpen) {
+  if (picksOpen) {
     return (
-      <AuctionOpenView
+      <PicksOpenView
         config={config}
         player={player}
         onLogin={onLogin}
@@ -247,5 +247,5 @@ export default function KnockoutPage({ config, player, teamsByName, onLogin, onV
     );
   }
 
-  return <PreAuctionView config={config} teamsByName={teamsByName} />;
+  return <PrePicksView config={config} teamsByName={teamsByName} />;
 }

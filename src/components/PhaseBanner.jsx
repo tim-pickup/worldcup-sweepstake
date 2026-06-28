@@ -4,7 +4,7 @@ const PHASE_DISPLAY_NAMES = {
   registration:         'Registration Open',
   group_preferences:    'Group Stage Picks',
   group_scoring:        'Group Stage',
-  knockout_preferences: 'Knockout Auction',
+  knockout_preferences: 'Knockout Picks',
   knockout_scoring:     'Knockout Stage',
   complete:             'Tournament Complete',
   between_phases:       'Preparing…',

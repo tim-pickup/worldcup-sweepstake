@@ -78,16 +78,32 @@ function getSheet(name) {
   return sheet;
 }
 
-/** Returns all data rows as an array of objects keyed by the header row. */
+/** True if every cell in the row is empty — used to skip unused padding rows below the data. */
+function isBlankRow(row) {
+  for (var i = 0; i < row.length; i++) {
+    if (row[i] !== '' && row[i] !== null) return false;
+  }
+  return true;
+}
+
+/**
+ * Returns all data rows as an array of objects keyed by the header row.
+ * Skips fully-blank rows — sheets are often formatted/padded far past their
+ * actual data (e.g. thousands of empty rows), and shipping those over the
+ * wire as null-filled objects wastes bandwidth and client-side processing.
+ */
 function sheetToObjects(sheet) {
   var data = sheet.getDataRange().getValues();
   if (data.length < 2) return [];
   var headers = data[0];
-  return data.slice(1).map(function (row) {
+  var rows = [];
+  for (var i = 1; i < data.length; i++) {
+    if (isBlankRow(data[i])) continue;
     var obj = {};
-    headers.forEach(function (h, i) { obj[h] = row[i]; });
-    return obj;
-  });
+    headers.forEach(function (h, j) { obj[h] = data[i][j]; });
+    rows.push(obj);
+  }
+  return rows;
 }
 
 // ─── Config Helpers ──────────────────────────────────────────────────────────

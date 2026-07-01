@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { getLeaderboard, getPlayerPicks, getAllAllocations, getAllKnockoutAllocations, getMatches } from '../api.js';
+import { getLeaderboard, getPlayerPicks } from '../api.js';
 import Flag from './Flag.jsx';
 
 const TIER_LABELS = { 1: 'Tier 1', 2: 'Tier 2', 3: 'Tier 3' };
@@ -233,11 +233,16 @@ function ExpandedPicks({ playerName, teamsByName, matches }) {
 }
 
 /* ── Main component ──────────────────────────────────────────────────────────── */
-export default function Leaderboard({ onRowsChange, teamsByName = {} }) {
+export default function Leaderboard({
+  onRowsChange,
+  teamsByName = {},
+  matches = [],
+  allocations = [],
+  knockoutAllocations = [],
+  resultsLoading = false,
+  onRefreshResults,
+}) {
   const [rows,        setRows]        = useState([]);
-  const [allocations, setAllocations] = useState([]);
-  const [knockoutAllocations, setKnockoutAllocations] = useState([]);
-  const [matches,     setMatches]     = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState('');
   const [expanded, setExpanded] = useState(null);
@@ -245,12 +250,7 @@ export default function Leaderboard({ onRowsChange, teamsByName = {} }) {
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError('');
-    const [leaderboardResult, allocationsResult, knockoutAllocationsResult, matchesResult] = await Promise.all([
-      getLeaderboard(),
-      getAllAllocations(),
-      getAllKnockoutAllocations(),
-      getMatches(),
-    ]);
+    const leaderboardResult = await getLeaderboard();
     if (leaderboardResult.ok) {
       const sorted = [...(leaderboardResult.data ?? [])].sort((a, b) => (a['Rank'] ?? Infinity) - (b['Rank'] ?? Infinity));
       setRows(sorted);
@@ -258,13 +258,15 @@ export default function Leaderboard({ onRowsChange, teamsByName = {} }) {
     } else {
       setError(leaderboardResult.error ?? 'Failed to load leaderboard.');
     }
-    if (allocationsResult.ok)         setAllocations(allocationsResult.data ?? []);
-    if (knockoutAllocationsResult.ok) setKnockoutAllocations(knockoutAllocationsResult.data ?? []);
-    if (matchesResult.ok)             setMatches(matchesResult.data ?? []);
     setLoading(false);
   }, [onRowsChange]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  function handleRefresh() {
+    fetchData();
+    onRefreshResults?.();
+  }
 
   function toggleExpand(name) {
     setExpanded(prev => prev === name ? null : name);
@@ -339,8 +341,8 @@ export default function Leaderboard({ onRowsChange, teamsByName = {} }) {
         <h2 className="card-title" style={{ marginBottom: 0, borderBottom: 'none', paddingBottom: 0 }}>
           🏆 Leaderboard
         </h2>
-        <button className="btn btn-secondary btn-sm" onClick={fetchData} disabled={loading}>
-          {loading ? 'Loading…' : '↻ Refresh'}
+        <button className="btn btn-secondary btn-sm" onClick={handleRefresh} disabled={loading || resultsLoading}>
+          {loading || resultsLoading ? 'Loading…' : '↻ Refresh'}
         </button>
       </div>
 

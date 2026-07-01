@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { getMatches, getAllAllocations, getAllKnockoutAllocations, getPlayerPicks } from '../api.js';
+import { useState, useMemo, useRef } from 'react';
+import { getPlayerPicks } from '../api.js';
 import Flag from './Flag.jsx';
 
 const PAGE_SIZE = 6;
@@ -56,52 +56,32 @@ function MatchPlayersPanel({ matchId, involvedPlayers, teamsByName, playerPicksC
   );
 }
 
-export default function MatchResults({ teamsByName = {} }) {
-  const [allMatches, setAllMatches]       = useState([]);
-  const [allAllocations, setAllAllocations] = useState([]);
-  const [allKnockoutAllocations, setAllKnockoutAllocations] = useState([]);
+export default function MatchResults({
+  teamsByName = {},
+  matches = [],
+  allocations = [],
+  knockoutAllocations = [],
+  loading = false,
+  error = '',
+}) {
   const [visibleCount, setVisibleCount]   = useState(PAGE_SIZE);
-  const [loading, setLoading]             = useState(true);
-  const [error, setError]                 = useState('');
   const [expandedMatchId, setExpandedMatchId] = useState(null);
   const [playerPicksCache, setPlayerPicksCache] = useState({});
   const [loadingPlayers, setLoadingPlayers]     = useState({});
 
   const fetchingRef = useRef(new Set());
 
-  useEffect(() => {
-    async function fetchData() {
-      const [matchResult, allocResult, knockoutAllocResult] = await Promise.all([
-        getMatches(),
-        getAllAllocations(),
-        getAllKnockoutAllocations(),
-      ]);
-      if (matchResult.ok) {
-        const sorted = [...(matchResult.data ?? [])].sort((a, b) => {
-          return new Date(b['Date'] ?? 0) - new Date(a['Date'] ?? 0);
-        });
-        setAllMatches(sorted);
-      } else {
-        setError(matchResult.error ?? 'Failed to load matches.');
-      }
-      if (allocResult.ok) {
-        setAllAllocations(allocResult.data ?? []);
-      }
-      if (knockoutAllocResult.ok) {
-        setAllKnockoutAllocations(knockoutAllocResult.data ?? []);
-      }
-      setLoading(false);
-    }
-    fetchData();
-  }, []);
+  const allMatches = useMemo(() => {
+    return [...matches].sort((a, b) => new Date(b['Date'] ?? 0) - new Date(a['Date'] ?? 0));
+  }, [matches]);
 
   function getInvolvedPlayers(match) {
     // Group Stage picks and Knockout Stage picks can send different teams to the
     // same player, so pick the allocation set that matches the match's stage.
-    const allocations = match['Stage'] === 'Group Stage' ? allAllocations : allKnockoutAllocations;
+    const relevantAllocations = match['Stage'] === 'Group Stage' ? allocations : knockoutAllocations;
     const matchTeams = new Set([match['Home Team'], match['Away Team']]);
     const byPlayer = {};
-    for (const alloc of allocations) {
+    for (const alloc of relevantAllocations) {
       const name = alloc['Player Name'];
       const team = alloc['Team Name'];
       if (matchTeams.has(team)) {

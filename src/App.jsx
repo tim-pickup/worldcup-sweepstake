@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { getConfig, getTeams } from './api.js';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { getConfig, getTeams, getMatches, getAllAllocations, getAllKnockoutAllocations } from './api.js';
 import TournamentHeader from './components/TournamentHeader.jsx';
 import Leaderboard from './components/Leaderboard.jsx';
 import MatchResults from './components/MatchResults.jsx';
@@ -87,6 +87,35 @@ export default function App() {
   const [leaderRows, setLeaderRows] = useState([]);
   const [teamsByName, setTeamsByName] = useState({});
 
+  // Matches / allocations / knockout allocations are needed by both Leaderboard
+  // (for the Played counter) and MatchResults (for Recent Results). Fetching
+  // them once here and passing down as props avoids each component independently
+  // hitting the same three slow Apps Script endpoints.
+  const [matches, setMatches] = useState([]);
+  const [allocations, setAllocations] = useState([]);
+  const [knockoutAllocations, setKnockoutAllocations] = useState([]);
+  const [resultsLoading, setResultsLoading] = useState(true);
+  const [resultsError, setResultsError] = useState('');
+  const resultsFetchedRef = useRef(false);
+
+  const fetchResultsData = useCallback(async () => {
+    setResultsLoading(true);
+    setResultsError('');
+    const [matchesResult, allocResult, knockoutAllocResult] = await Promise.all([
+      getMatches(),
+      getAllAllocations(),
+      getAllKnockoutAllocations(),
+    ]);
+    if (matchesResult.ok) {
+      setMatches(matchesResult.data ?? []);
+    } else {
+      setResultsError(matchesResult.error ?? 'Failed to load matches.');
+    }
+    if (allocResult.ok)         setAllocations(allocResult.data ?? []);
+    if (knockoutAllocResult.ok) setKnockoutAllocations(knockoutAllocResult.data ?? []);
+    setResultsLoading(false);
+  }, []);
+
   useEffect(() => {
     const stored = loadPlayerFromSession();
     if (stored) setPlayer(stored);
@@ -160,6 +189,18 @@ export default function App() {
     isKnockoutPrefs ||
     isKnockoutEraBetween ||
     (currentPhase === 'group_scoring' && !!groupScoringHasClosed);
+
+  // Leaderboard + MatchResults (the two consumers of the shared results data)
+  // only render in this specific branch — see the JSX below.
+  const showResultsSection = showLeaderboard && !isComplete && !showKnockoutPage;
+
+  // Fetch shared results data once, the first time it's actually needed.
+  useEffect(() => {
+    if (showResultsSection && !resultsFetchedRef.current) {
+      resultsFetchedRef.current = true;
+      fetchResultsData();
+    }
+  }, [showResultsSection, fetchResultsData]);
 
   // Redirect to the right home view when phase or leaderboard visibility changes
   useEffect(() => {
@@ -281,8 +322,23 @@ export default function App() {
             ) : (
               <>
                 <TournamentHeader config={config} leaderRows={leaderRows} />
-                <Leaderboard onRowsChange={setLeaderRows} teamsByName={teamsByName} />
-                <MatchResults teamsByName={teamsByName} />
+                <Leaderboard
+                  onRowsChange={setLeaderRows}
+                  teamsByName={teamsByName}
+                  matches={matches}
+                  allocations={allocations}
+                  knockoutAllocations={knockoutAllocations}
+                  resultsLoading={resultsLoading}
+                  onRefreshResults={fetchResultsData}
+                />
+                <MatchResults
+                  teamsByName={teamsByName}
+                  matches={matches}
+                  allocations={allocations}
+                  knockoutAllocations={knockoutAllocations}
+                  loading={resultsLoading}
+                  error={resultsError}
+                />
               </>
             )}
           </>

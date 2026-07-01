@@ -295,6 +295,15 @@ function handleGetAllAllocations() {
 }
 
 /**
+ * Returns all rows from the KnockoutAllocations sheet.
+ * Public — no auth required. Mirrors handleGetAllAllocations for the knockout stage.
+ * KnockoutAllocations columns: Player ID | Player Name | Team Name | Tier
+ */
+function handleGetAllKnockoutAllocations() {
+  return ok(sheetToObjects(getSheet('KnockoutAllocations')));
+}
+
+/**
  * Returns an alphabetically-sorted list of registered player names.
  * Public — no PIN required. Used to populate the login name picker.
  */
@@ -722,6 +731,7 @@ function doGet(e) {
       case 'getMatches':       return handleGetMatches();
       case 'getPlayerNames':   return handleGetPlayerNames();
       case 'getAllAllocations': return handleGetAllAllocations();
+      case 'getAllKnockoutAllocations': return handleGetAllKnockoutAllocations();
       case 'getPlayerPicks':   return handleGetPlayerPicks(e.parameter.playerName || '');
       case 'getAllocations':          return handleGetAllocations(e.parameter.name || '', pin);
       case 'getKnockoutAllocations': return handleGetKnockoutAllocations(e.parameter.name || '', pin);

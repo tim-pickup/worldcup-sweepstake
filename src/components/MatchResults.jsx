@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { getMatches, getAllAllocations, getPlayerPicks } from '../api.js';
+import { getMatches, getAllAllocations, getAllKnockoutAllocations, getPlayerPicks } from '../api.js';
 import Flag from './Flag.jsx';
 
 const PAGE_SIZE = 6;
@@ -59,6 +59,7 @@ function MatchPlayersPanel({ matchId, involvedPlayers, teamsByName, playerPicksC
 export default function MatchResults({ teamsByName = {} }) {
   const [allMatches, setAllMatches]       = useState([]);
   const [allAllocations, setAllAllocations] = useState([]);
+  const [allKnockoutAllocations, setAllKnockoutAllocations] = useState([]);
   const [visibleCount, setVisibleCount]   = useState(PAGE_SIZE);
   const [loading, setLoading]             = useState(true);
   const [error, setError]                 = useState('');
@@ -70,7 +71,11 @@ export default function MatchResults({ teamsByName = {} }) {
 
   useEffect(() => {
     async function fetchData() {
-      const [matchResult, allocResult] = await Promise.all([getMatches(), getAllAllocations()]);
+      const [matchResult, allocResult, knockoutAllocResult] = await Promise.all([
+        getMatches(),
+        getAllAllocations(),
+        getAllKnockoutAllocations(),
+      ]);
       if (matchResult.ok) {
         const sorted = [...(matchResult.data ?? [])].sort((a, b) => {
           return new Date(b['Date'] ?? 0) - new Date(a['Date'] ?? 0);
@@ -82,15 +87,21 @@ export default function MatchResults({ teamsByName = {} }) {
       if (allocResult.ok) {
         setAllAllocations(allocResult.data ?? []);
       }
+      if (knockoutAllocResult.ok) {
+        setAllKnockoutAllocations(knockoutAllocResult.data ?? []);
+      }
       setLoading(false);
     }
     fetchData();
   }, []);
 
   function getInvolvedPlayers(match) {
+    // Group Stage picks and Knockout Stage picks can send different teams to the
+    // same player, so pick the allocation set that matches the match's stage.
+    const allocations = match['Stage'] === 'Group Stage' ? allAllocations : allKnockoutAllocations;
     const matchTeams = new Set([match['Home Team'], match['Away Team']]);
     const byPlayer = {};
-    for (const alloc of allAllocations) {
+    for (const alloc of allocations) {
       const name = alloc['Player Name'];
       const team = alloc['Team Name'];
       if (matchTeams.has(team)) {

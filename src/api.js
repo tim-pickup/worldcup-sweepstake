@@ -79,6 +79,11 @@ export function getAllAllocations() {
   return get('getAllAllocations');
 }
 
+/** All player-to-team knockout allocations. Public — no auth required. */
+export function getAllKnockoutAllocations() {
+  return get('getAllKnockoutAllocations');
+}
+
 /**
  * Alphabetically-sorted list of registered player names.
  * Used to populate the login name picker.

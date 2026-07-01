@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { getLeaderboard, getPlayerPicks, getAllAllocations, getMatches } from '../api.js';
+import { getLeaderboard, getPlayerPicks, getAllAllocations, getAllKnockoutAllocations, getMatches } from '../api.js';
 import Flag from './Flag.jsx';
 
 const TIER_LABELS = { 1: 'Tier 1', 2: 'Tier 2', 3: 'Tier 3' };
@@ -236,6 +236,7 @@ function ExpandedPicks({ playerName, teamsByName, matches }) {
 export default function Leaderboard({ onRowsChange, teamsByName = {} }) {
   const [rows,        setRows]        = useState([]);
   const [allocations, setAllocations] = useState([]);
+  const [knockoutAllocations, setKnockoutAllocations] = useState([]);
   const [matches,     setMatches]     = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState('');
@@ -244,9 +245,10 @@ export default function Leaderboard({ onRowsChange, teamsByName = {} }) {
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError('');
-    const [leaderboardResult, allocationsResult, matchesResult] = await Promise.all([
+    const [leaderboardResult, allocationsResult, knockoutAllocationsResult, matchesResult] = await Promise.all([
       getLeaderboard(),
       getAllAllocations(),
+      getAllKnockoutAllocations(),
       getMatches(),
     ]);
     if (leaderboardResult.ok) {
@@ -256,8 +258,9 @@ export default function Leaderboard({ onRowsChange, teamsByName = {} }) {
     } else {
       setError(leaderboardResult.error ?? 'Failed to load leaderboard.');
     }
-    if (allocationsResult.ok) setAllocations(allocationsResult.data ?? []);
-    if (matchesResult.ok)     setMatches(matchesResult.data ?? []);
+    if (allocationsResult.ok)         setAllocations(allocationsResult.data ?? []);
+    if (knockoutAllocationsResult.ok) setKnockoutAllocations(knockoutAllocationsResult.data ?? []);
+    if (matchesResult.ok)             setMatches(matchesResult.data ?? []);
     setLoading(false);
   }, [onRowsChange]);
 
@@ -267,24 +270,27 @@ export default function Leaderboard({ onRowsChange, teamsByName = {} }) {
     setExpanded(prev => prev === name ? null : name);
   }
 
-  // Map of team name -> number of completed group-stage matches.
-  const matchesPlayedByTeam = useMemo(() => {
-    const counts = {};
+  // Maps of team name -> number of completed matches, split by stage since a
+  // player's group-stage teams and knockout-stage teams can differ, and each
+  // pick only earns points (and "counts as played") for matches in its own stage.
+  const { groupMatchesPlayedByTeam, knockoutMatchesPlayedByTeam } = useMemo(() => {
+    const group = {};
+    const knockout = {};
     for (const match of matches) {
-      if (match['Stage'] !== 'Group Stage') continue;
       const homeScore = match['Home Score'];
       const awayScore = match['Away Score'];
       if (homeScore === '' || homeScore == null || awayScore === '' || awayScore == null) continue;
+      const counts = match['Stage'] === 'Group Stage' ? group : knockout;
       const home = match['Home Team'];
       const away = match['Away Team'];
       if (home) counts[home] = (counts[home] ?? 0) + 1;
       if (away) counts[away] = (counts[away] ?? 0) + 1;
     }
-    return counts;
+    return { groupMatchesPlayedByTeam: group, knockoutMatchesPlayedByTeam: knockout };
   }, [matches]);
 
   // Map of player name -> array of their group-stage team picks.
-  const teamsByPlayer = useMemo(() => {
+  const groupTeamsByPlayer = useMemo(() => {
     const map = {};
     for (const alloc of allocations) {
       const name = alloc['Player Name'];
@@ -295,11 +301,25 @@ export default function Leaderboard({ onRowsChange, teamsByName = {} }) {
     return map;
   }, [allocations]);
 
+  // Map of player name -> array of their knockout-stage team picks.
+  const knockoutTeamsByPlayer = useMemo(() => {
+    const map = {};
+    for (const alloc of knockoutAllocations) {
+      const name = alloc['Player Name'];
+      const team = alloc['Team Name'];
+      if (!name || !team) continue;
+      (map[name] ??= []).push(team);
+    }
+    return map;
+  }, [knockoutAllocations]);
+
   function getGamesPlayed(playerName) {
-    const teams = teamsByPlayer[playerName];
-    if (!teams || teams.length === 0) return null;
-    const played = teams.reduce((sum, team) => sum + (matchesPlayedByTeam[team] ?? 0), 0);
-    return { played, total: teams.length * 3 };
+    const groupTeams    = groupTeamsByPlayer[playerName] ?? [];
+    const knockoutTeams = knockoutTeamsByPlayer[playerName] ?? [];
+    if (groupTeams.length === 0 && knockoutTeams.length === 0) return null;
+    const groupPlayed    = groupTeams.reduce((sum, team) => sum + (groupMatchesPlayedByTeam[team] ?? 0), 0);
+    const knockoutPlayed = knockoutTeams.reduce((sum, team) => sum + (knockoutMatchesPlayedByTeam[team] ?? 0), 0);
+    return groupPlayed + knockoutPlayed;
   }
 
   const topPts    = rows[0]?.['Total Points'] ?? 1;
@@ -384,7 +404,7 @@ export default function Leaderboard({ onRowsChange, teamsByName = {} }) {
                       <td className="col-sub">{row['Result Points']   ?? 0}</td>
                       <td className="col-sub">{row['Penalty Points']  ?? 0}</td>
                       <td className="col-sub">
-                        {gamesPlayed ? `${gamesPlayed.played}/${gamesPlayed.total}` : '–'}
+                        {gamesPlayed !== null ? gamesPlayed : '–'}
                       </td>
                       <td style={{ textAlign: 'center' }}>
                         <span className={`leaderboard-chevron${isOpen ? ' open' : ''}`}>▼</span>
